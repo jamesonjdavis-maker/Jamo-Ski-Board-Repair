@@ -5,7 +5,7 @@
 
 var SHEET_NAME = "Requests";
 var FOLDER_NAME = "Jamo's Repair Photos";
-var HEADERS = ["Received", "Type", "Name", "Phone", "Day", "Time", "Drop-off / Pickup", "Pickup address", "Order", "Estimated total", "Notes", "Photos", "Status", "Amount paid ($)", "Paid with"];
+var HEADERS = ["Received", "Type", "Name", "Phone", "Day", "Time", "Drop-off / Pickup", "Pickup address", "Order", "Estimated total", "Notes", "Photos", "Status", "Amount paid ($)", "Paid with", "Auto-texted"];
 var EXPENSE_CATEGORIES = ["Wax", "P-Tex & epoxy", "Tools", "Gas & driving", "Supplies", "Website & ads", "Other"];
 
 function doPost(e) {
@@ -39,9 +39,32 @@ function doPost(e) {
   }
 }
 
-// Lets you open the web app URL in a browser to check it's running.
-function doGet() {
-  return reply_({ ok: true, message: "Jamo's request inbox is running." });
+// Opening the web app URL in a browser shows it's running.
+// The iPhone auto-text shortcut calls it with ?key=... to get the next booking that
+// hasn't been auto-texted yet. The key is private and is never on the website.
+function doGet(e) {
+  var key = PropertiesService.getScriptProperties().getProperty("AUTOTEXT_KEY");
+  if (!key || !e || !e.parameter || e.parameter.key !== key) {
+    return reply_({ ok: true, message: "Jamo's request inbox is running." });
+  }
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sheet = getSheet_();
+    var last = sheet.getLastRow();
+    if (last < 2) return reply_({ ok: true });
+    var rows = sheet.getRange(2, 1, last - 1, 16).getValues();
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (r[1] === "Booking" && r[3] && !r[15]) {
+        sheet.getRange(i + 2, 16).setValue(new Date());
+        return reply_({ ok: true, name: String(r[2]).split(" ")[0], phone: String(r[3]) });
+      }
+    }
+    return reply_({ ok: true });
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function getSheet_() {
@@ -62,7 +85,10 @@ function getSheet_() {
 
 // Adds a "Jamo's" menu to the sheet.
 function onOpen() {
-  SpreadsheetApp.getUi().createMenu("Jamo's").addItem("Set up money tracking", "setupMoneyTracking").addToUi();
+  SpreadsheetApp.getUi().createMenu("Jamo's")
+    .addItem("Set up money tracking", "setupMoneyTracking")
+    .addItem("Set up auto-text", "setupAutoText")
+    .addToUi();
 }
 
 // Run once. Adds "Amount paid" and "Paid with" columns to Requests, an Expenses tab,
@@ -118,6 +144,31 @@ function setupMoneyTracking() {
     tot.getRange("C3").setValue("Change these dates each season").setFontColor("#557085");
   }
   ss.setActiveSheet(tot);
+}
+
+// Run once after deploying the new version. Creates a private link for the iPhone
+// shortcut and puts it on a Settings tab. Existing bookings are marked as already
+// texted so customers from before don't get a surprise text.
+function setupAutoText() {
+  var props = PropertiesService.getScriptProperties();
+  var key = props.getProperty("AUTOTEXT_KEY");
+  if (!key) { key = Utilities.getUuid().replace(/-/g, ""); props.setProperty("AUTOTEXT_KEY", key); }
+
+  var req = getSheet_();
+  req.getRange(1, 16).setValue("Auto-texted").setFontWeight("bold").setBackground("#12293b").setFontColor("#ffffff");
+  var last = req.getLastRow();
+  if (last >= 2) {
+    var col = req.getRange(2, 16, last - 1, 1);
+    var vals = col.getValues().map(function (v) { return [v[0] || "Before auto-text"]; });
+    col.setValues(vals);
+  }
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var set = ss.getSheetByName("Settings") || ss.insertSheet("Settings");
+  set.getRange("A1:A3").setValues([["Auto-text link for the iPhone shortcut (keep this private)"], [ScriptApp.getService().getUrl() + "?key=" + key], ["If you ever need a new link, delete AUTOTEXT_KEY in Apps Script > Project Settings > Script Properties and run Set up auto-text again."]]);
+  set.getRange("A1").setFontWeight("bold");
+  set.setColumnWidth(1, 700);
+  ss.setActiveSheet(set);
 }
 
 function formatPaidColumns_(sheet) {
