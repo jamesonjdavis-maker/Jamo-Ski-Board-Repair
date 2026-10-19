@@ -5,39 +5,36 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Jamo's Ski &amp; Snowboard Repair</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Hand-done ski and snowboard tuning and repair in Boulder, CO. Waxing, edge sharpening, P-Tex and epoxy base repair, with pickup and dropoff inside Boulder city limits.">
+<meta name="description" content="Hand-done ski and snowboard tuning and repair in Boulder, CO. Waxing, edge sharpening, P-Tex and epoxy repair, with pickup and dropoff inside Boulder city limits.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@600;800&family=Fjalla+One&family=Outfit:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@600;700;800&family=Outfit:wght@400;500;600&display=swap">
 <style>
-/* Layout: flyer-blue masthead band, then a ski-shop counter: service "tags" on the left, the running ticket on the right. */
+/* Layout: "Flyer Refresh". Flyer navy-to-blue hero with glass buttons and a mountain edge, then airy ice-blue page with white rounded cards; the order ticket is the one dark navy object, with a gold total. */
 :root {
-  --bg: #eef4f8;
+  --bg: #eaf3f9;
   --surface: #ffffff;
   --ink: #12293b;
-  --muted: #4b6578;
-  --line: #c9d9e4;
-  --band: #2d5f80;
-  --band-deep: #12293b;
+  --muted: #557085;
+  --line: #cfe0eb;
+  --blue: #2d5f80;
+  --navy: #12293b;
   --ice: #a9d6f0;
-  --bronze: #a87a2c;
-  --silver: #9a9fa3;
-  --gold: #e9c25e;
-  --season: #cfd6db;
-  --on-tag: #12293b;
-  --accent: #1f6f9f;
+  --gold: #f2cd6e;
+  --on-gold: #12293b;
+  --accent: #2d5f80;
+  --check: #2d5f80;
   --font-display: "League Spartan", "Futura", "Avenir Next", system-ui, sans-serif;
-  --font-label: "Fjalla One", "Oswald", "Arial Narrow", sans-serif-condensed, sans-serif;
   --font-body: "Outfit", "Avenir Next", "Segoe UI", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0c1c28; --surface: #132a3b; --ink: #e6f1f8; --muted: #9db6c7; --line: #24435a;
-    --band: #1d4864; --band-deep: #081520; --ice: #7fbfe4; --accent: #7fc3ea; color-scheme: dark;
+    --bg: #0b1824; --surface: #132637; --ink: #e7f1f8; --muted: #9ab4c6; --line: #22405a;
+    --navy: #07121c; --accent: #8ccbef; --check: #8ccbef; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0c1c28; --surface: #132a3b; --ink: #e6f1f8; --muted: #9db6c7; --line: #24435a;
-  --band: #1d4864; --band-deep: #081520; --ice: #7fbfe4; --accent: #7fc3ea; color-scheme: dark;
+  --bg: #0b1824; --surface: #132637; --ink: #e7f1f8; --muted: #9ab4c6; --line: #22405a;
+  --navy: #07121c; --accent: #8ccbef; --check: #8ccbef; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -49,154 +46,146 @@ h1, h2, h3 { font-family: var(--font-display); line-height: 1.05; text-wrap: bal
 p { margin: 0; }
 a { color: var(--accent); }
 :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-.wrap { max-width: 68rem; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 70rem; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 
-/* Masthead */
-.mast { background: linear-gradient(180deg, var(--band) 0%, var(--band) 60%, var(--band-deep) 100%); color: #fff; position: relative; overflow: hidden; }
-.mast .wrap { padding-block: 2.5rem 7rem; position: relative; z-index: 1; display: grid; gap: 1.25rem; }
-.mast nav { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; font-weight: 500; }
-.mast nav a { color: #fff; text-decoration: none; opacity: .85; }
-.mast nav a:hover { opacity: 1; text-decoration: underline; }
-.brand { display: grid; gap: .1rem; margin-top: 1rem; }
-.brand .jamos { font-size: clamp(3.2rem, 11vw, 6.5rem); font-weight: 800; color: var(--band-deep); letter-spacing: -.02em; }
-.brand .ski { font-size: clamp(1.9rem, 6.4vw, 3.9rem); font-weight: 800; color: #fff; }
-.brand .repair { font-size: clamp(2rem, 6vw, 3.6rem); font-weight: 800; color: var(--band-deep); }
-.mast .lede { max-width: 34rem; font-size: 1.15rem; color: #e3f1fa; }
-.mast .cta { display: flex; flex-wrap: wrap; gap: .75rem; }
-.btn { display: inline-flex; align-items: center; gap: .5rem; font: 600 1rem var(--font-body); padding: .75rem 1.2rem; border-radius: 999px; border: 2px solid transparent; cursor: pointer; text-decoration: none; }
-.btn-gold { background: var(--gold); color: var(--on-tag); }
-.btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.6); }
-.btn-ink { background: var(--ink); color: var(--bg); }
-.btn-line { background: transparent; color: var(--ink); border-color: var(--line); }
-.mountains { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 9rem; display: block; }
-.mountains .back { fill: var(--ice); opacity: .55; }
+/* Hero */
+.mast { background: linear-gradient(160deg, #2d5f80 0%, #1b4562 55%, #12293b 100%); color: #fff; position: relative; overflow: hidden; }
+.mast::after { content: ""; position: absolute; inset: -30% -10% auto auto; width: 60%; aspect-ratio: 1; background: radial-gradient(closest-side, rgba(169,214,240,.25), transparent); pointer-events: none; }
+.mast .wrap { padding-block: 1.25rem 8rem; position: relative; z-index: 1; display: grid; gap: 1.4rem; }
+.topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; }
+.logo { font: 800 1.35rem var(--font-display); color: #fff; text-decoration: none; letter-spacing: -.01em; }
+.logo span { color: var(--gold); }
+.mast nav { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; font-weight: 500; font-size: .98rem; }
+.mast nav a { color: #cfe5f3; text-decoration: none; }
+.mast nav a:hover { color: #fff; }
+.mast h1 { margin-top: 2.5rem; font-size: clamp(2.5rem, 7vw, 4.6rem); font-weight: 800; letter-spacing: -.02em; max-width: 14ch; line-height: .98; }
+.mast h1 em { font-style: normal; color: var(--ice); }
+.mast .lede { max-width: 36rem; font-size: 1.2rem; color: #d9ebf6; }
+.proof { display: flex; flex-wrap: wrap; gap: .5rem; }
+.proof span { font-size: .85rem; font-weight: 500; padding: .3rem .75rem; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); color: #e6f2fa; }
+.cta { display: flex; flex-wrap: wrap; gap: .75rem; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; font: 600 1rem var(--font-body); padding: .8rem 1.3rem; border-radius: 12px; border: 1px solid transparent; cursor: pointer; text-decoration: none; transition: transform .15s ease, background-color .15s ease; }
+.btn:hover { transform: translateY(-1px); }
+.btn-gold { background: var(--gold); color: var(--on-gold); }
+.btn-glass { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.3); backdrop-filter: blur(6px); }
+.btn-ink { background: var(--blue); color: #fff; }
+.btn-line { background: var(--surface); color: var(--ink); border-color: var(--line); }
+.mountains { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: 7rem; display: block; }
+.mountains .back { fill: var(--ice); opacity: .35; }
 .mountains .front { fill: var(--bg); }
-.proof { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; font-family: var(--font-label); letter-spacing: .06em; text-transform: uppercase; color: var(--ice); }
 
 section { padding-block: 3.5rem 1rem; }
-.eyebrow { font-family: var(--font-label); text-transform: uppercase; letter-spacing: .1em; color: var(--accent); font-size: .95rem; }
-.sec-head { display: grid; gap: .4rem; margin-bottom: 1.75rem; max-width: 40rem; }
-.sec-head h2 { font-size: clamp(1.9rem, 4.5vw, 2.8rem); }
+.eyebrow { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--accent); }
+.sec-head { display: grid; gap: .5rem; margin-bottom: 1.75rem; max-width: 40rem; }
+.sec-head h2 { font-size: clamp(2rem, 4.5vw, 2.9rem); letter-spacing: -.015em; }
 .sec-head p { color: var(--muted); }
 
-/* Services: price tags like the flyer */
-.tiers { display: grid; gap: .9rem; }
-.tier { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; background: var(--surface); border: 1px solid var(--line); border-radius: .5rem; overflow: hidden; }
-.tier .info { padding: 1rem 1.25rem; display: grid; gap: .3rem; min-width: 0; }
-.tier h3 { font-family: var(--font-label); font-weight: 400; font-size: 1.6rem; letter-spacing: .01em; }
-.tier ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: .35rem; }
-.tier li { font-size: .9rem; padding: .15rem .6rem; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
-.tier .why { color: var(--muted); font-size: .95rem; }
-.tag { display: grid; place-items: center; min-width: 7.5rem; padding: 0 1.5rem 0 1.25rem; font-family: var(--font-display); font-weight: 800; font-size: 2rem; color: var(--on-tag); border-radius: 0 999px 999px 0; font-variant-numeric: tabular-nums; }
-.tag small { display: block; font: 500 .75rem var(--font-body); text-align: center; margin-top: -.3rem; }
-.t-bronze .tag { background: var(--bronze); color: #fff; }
-.t-silver .tag { background: var(--silver); color: #fff; }
-.t-gold .tag { background: var(--gold); }
-.t-season .tag { background: var(--season); }
-.svcs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: .9rem; }
-.svc { background: var(--surface); border: 1px solid var(--line); border-radius: .5rem; padding: 1rem 1.25rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .25rem 1rem; align-items: baseline; }
-.svc h3 { font-family: var(--font-label); font-weight: 400; font-size: 1.35rem; }
-.svc .price { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
-.svc p { grid-column: 1 / -1; color: var(--muted); font-size: .95rem; }
-.checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
-.checks label { display: flex; gap: .6rem; align-items: center; justify-content: space-between; padding: .55rem .75rem; border-radius: .4rem; border: 2px solid var(--line); background: var(--bg); cursor: pointer; }
-.checks label span { display: flex; gap: .5rem; align-items: center; min-width: 0; }
-.checks input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); flex: none; }
-.checks em { font-style: normal; font-variant-numeric: tabular-nums; color: var(--muted); }
-.checks label:has(input:checked) { border-color: var(--accent); }
-.checks.covered em { text-decoration: line-through; }
-.season-pick { display: flex; gap: .6rem; align-items: center; padding: .6rem .75rem; border-radius: .4rem; background: var(--season); color: var(--on-tag); font-weight: 600; cursor: pointer; }
-.season-pick input { width: 1.1rem; height: 1.1rem; }
-.addon { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: baseline; padding: 1rem 1.25rem; border: 2px dashed var(--line); border-radius: .5rem; }
-.addon strong { font-family: var(--font-label); font-weight: 400; font-size: 1.25rem; }
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 1px 2px rgba(18,41,59,.04), 0 10px 30px rgba(18,41,59,.05); }
+
+/* Services */
+.svcs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 1rem; }
+.svc { padding: 1.25rem; display: grid; gap: .4rem; align-content: start; }
+.svc h3 { font-size: 1.3rem; font-weight: 700; }
+.svc .price { font: 800 2rem var(--font-display); color: var(--accent); font-variant-numeric: tabular-nums; }
+.svc p { color: var(--muted); font-size: .95rem; }
+.season { margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem 2rem; padding: 1.5rem; border-radius: 16px; background: linear-gradient(135deg, #12293b, #1b4562); color: #fff; }
+.season h3 { font-size: 1.6rem; }
+.season p { color: #cfe5f3; max-width: 38rem; margin-top: .3rem; }
+.season .big { font: 800 2.6rem var(--font-display); color: var(--gold); line-height: 1; font-variant-numeric: tabular-nums; }
+.season .big small { display: block; font: 500 .85rem var(--font-body); color: #cfe5f3; margin-top: .25rem; }
+.addon { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: baseline; padding: 1rem 1.25rem; border: 1.5px dashed var(--line); border-radius: 16px; }
+.addon strong { font-family: var(--font-display); font-size: 1.15rem; }
 
 /* Quote builder */
 .builder { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
-.gear-list { display: grid; gap: .9rem; }
-.gear { background: var(--surface); border: 1px solid var(--line); border-radius: .5rem; padding: 1rem 1.1rem; display: grid; gap: .8rem; }
+.gear-list { display: grid; gap: 1rem; }
+.gear { padding: 1.1rem; display: grid; gap: .85rem; }
 .gear-top { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: space-between; }
-.gear-top .kind { display: flex; gap: .35rem; }
-.chip { font: 500 .95rem var(--font-body); padding: .4rem .85rem; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
-.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.gear-top .kind { display: flex; gap: .35rem; padding: .25rem; border-radius: 12px; background: var(--bg); }
+.chip { font: 500 .95rem var(--font-body); padding: .4rem .9rem; border-radius: 9px; border: none; background: transparent; color: var(--muted); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(18,41,59,.15); }
 .remove { background: none; border: none; color: var(--muted); font: 500 .9rem var(--font-body); cursor: pointer; text-decoration: underline; }
-.pick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; }
-.pick label { position: relative; cursor: pointer; }
-.pick input { position: absolute; opacity: 0; inset: 0; }
-.pick span { display: grid; gap: .05rem; text-align: center; padding: .55rem .25rem; border-radius: .4rem; border: 2px solid var(--line); background: var(--bg); }
-.pick b { font-family: var(--font-label); font-weight: 400; font-size: 1.05rem; }
-.pick em { font-style: normal; font-variant-numeric: tabular-nums; color: var(--muted); font-size: .9rem; }
-.pick input:checked + span { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-.pick input:focus-visible + span { outline: 3px solid var(--gold); outline-offset: 2px; }
+.checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+.checks label { display: flex; gap: .6rem; align-items: center; justify-content: space-between; padding: .65rem .8rem; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface); cursor: pointer; transition: border-color .15s ease, background-color .15s ease; }
+.checks label span { display: flex; gap: .55rem; align-items: center; min-width: 0; }
+.checks input { width: 1.1rem; height: 1.1rem; accent-color: var(--check); flex: none; }
+.checks em { font-style: normal; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--muted); }
+.checks label:has(input:checked) { border-color: var(--accent); background: var(--bg); }
+.checks.covered em { text-decoration: line-through; }
+.season-pick { display: flex; gap: .6rem; align-items: center; padding: .7rem .85rem; border-radius: 12px; background: linear-gradient(135deg, #12293b, #1b4562); color: #fff; font-weight: 600; cursor: pointer; }
+.season-pick input { width: 1.1rem; height: 1.1rem; accent-color: var(--gold); }
 .add-row { display: flex; flex-wrap: wrap; gap: .6rem; }
 
-.ticket { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); background: var(--surface); border: 1px solid var(--line); border-radius: .5rem; padding: 1.25rem; display: grid; gap: .9rem; }
+.ticket { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); background: #12293b; color: #fff; border-radius: 16px; padding: 1.4rem; display: grid; gap: .9rem; box-shadow: 0 20px 40px rgba(18,41,59,.18); }
 .ticket h3 { font-size: 1.5rem; }
-.lines { margin: 0; padding: 0; list-style: none; display: grid; gap: .4rem; font-variant-numeric: tabular-nums; }
+.lines { margin: 0; padding: 0; list-style: none; display: grid; gap: .45rem; font-variant-numeric: tabular-nums; color: #d9ebf6; }
 .lines li { display: flex; justify-content: space-between; gap: 1rem; }
 .lines li span:first-child { min-width: 0; }
-.lines .empty { color: var(--muted); }
-.toggle { display: flex; gap: .6rem; align-items: flex-start; padding-block: .75rem; border-block: 1px solid var(--line); cursor: pointer; }
-.toggle input { width: 1.2rem; height: 1.2rem; margin-top: .2rem; accent-color: var(--accent); }
-.total { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-display); font-weight: 800; font-size: 2rem; font-variant-numeric: tabular-nums; }
-.total span:first-child { font-size: 1.1rem; font-weight: 600; }
+.lines .empty { color: #9ab4c6; }
+.toggle { display: flex; gap: .6rem; align-items: flex-start; padding-block: .8rem; border-block: 1px solid rgba(255,255,255,.14); cursor: pointer; }
+.toggle input { width: 1.2rem; height: 1.2rem; margin-top: .2rem; accent-color: var(--gold); }
+.total { display: flex; justify-content: space-between; align-items: baseline; font: 800 2.2rem var(--font-display); color: var(--gold); font-variant-numeric: tabular-nums; }
+.total span:first-child { font-size: 1.1rem; font-weight: 600; color: #fff; }
 .fine { color: var(--muted); font-size: .85rem; }
+.ticket .fine { color: #9ab4c6; }
 
 /* Forms */
-.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: .5rem; padding: 1.25rem; display: grid; gap: .9rem; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; align-items: start; }
+.panel { padding: 1.4rem; display: grid; gap: .95rem; }
 .panel h3 { font-size: 1.5rem; }
 .field { display: grid; gap: .3rem; }
 .field label { font-weight: 600; font-size: .95rem; }
-.field input, .field textarea, .field select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: .4rem; padding: .6rem .7rem; width: 100%; }
+.field input, .field textarea, .field select { font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 10px; padding: .65rem .75rem; width: 100%; }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); outline: none; }
 .field textarea { min-height: 6rem; resize: vertical; }
 .row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .75rem; }
-.drop { border: 2px dashed var(--line); border-radius: .5rem; padding: 1.25rem; text-align: center; display: grid; gap: .4rem; cursor: pointer; background: var(--bg); }
-.drop.over { border-color: var(--accent); }
+.drop { border: 1.5px dashed var(--accent); border-radius: 14px; padding: 1.5rem; text-align: center; display: grid; gap: .4rem; cursor: pointer; background: var(--bg); }
+.drop.over { background: var(--surface); }
 .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: .5rem; }
-.thumbs img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: .35rem; border: 1px solid var(--line); }
-.result { display: grid; gap: .6rem; padding: 1rem; border-radius: .5rem; background: var(--bg); border: 1px solid var(--accent); }
+.thumbs img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); }
+.result { display: grid; gap: .6rem; padding: 1rem; border-radius: 12px; background: var(--bg); border: 1.5px solid var(--accent); }
 .result pre { margin: 0; white-space: pre-wrap; font: .9rem/1.45 ui-monospace, "SF Mono", Menlo, monospace; overflow-x: auto; }
-.phone { font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; letter-spacing: .04em; user-select: all; font-variant-numeric: tabular-nums; }
+.phone { font-family: var(--font-display); font-weight: 800; font-size: 1.7rem; letter-spacing: .03em; user-select: all; font-variant-numeric: tabular-nums; }
 
 .faq { display: grid; gap: .6rem; max-width: 46rem; }
-.faq details { background: var(--surface); border: 1px solid var(--line); border-radius: .5rem; padding: .85rem 1.1rem; }
+.faq details { padding: 1rem 1.2rem; }
 .faq summary { font-weight: 600; cursor: pointer; }
 .faq details p { margin-top: .5rem; color: var(--muted); }
 
-footer { margin-top: 4rem; background: var(--band-deep); color: #d5e6f1; }
-footer .wrap { padding-block: 2rem; display: flex; flex-wrap: wrap; gap: 1rem 2rem; justify-content: space-between; }
+footer { margin-top: 4rem; background: var(--navy); color: #cfe5f3; }
+footer .wrap { padding-block: 2.25rem; display: flex; flex-wrap: wrap; gap: 1rem 2rem; justify-content: space-between; }
 footer strong { font-family: var(--font-display); color: #fff; font-size: 1.2rem; }
 
 @media (max-width: 760px) {
   .builder, .two { grid-template-columns: minmax(0, 1fr); }
   .ticket { position: static; }
   .checks { grid-template-columns: minmax(0, 1fr); }
-  .tag { min-width: 5.5rem; font-size: 1.6rem; padding: 0 1rem 0 .9rem; }
+  .mast h1 { margin-top: 1.5rem; }
 }
-@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
 html { scroll-behavior: smooth; }
 </style>
 </head>
 <body>
 <header class="mast">
   <div class="wrap">
-    <nav aria-label="Sections">
-      <a href="#services">Services</a>
-      <a href="#quote">Build a quote</a>
-      <a href="#photos">Send photos</a>
-      <a href="#book">Book</a>
-      <a href="#faq">FAQ</a>
-    </nav>
-    <div class="brand" aria-label="Jamo's Ski and Snowboard Repair">
-      <span class="jamos">Jamo's</span>
-      <span class="ski">SKI &amp; SNOWBOARD</span>
-      <span class="repair">Repair</span>
+    <div class="topbar">
+      <a class="logo" href="#">Jamo's <span>Ski &amp; Board</span></a>
+      <nav aria-label="Sections">
+        <a href="#services">Services</a>
+        <a href="#quote">Quote</a>
+        <a href="#photos">Photos</a>
+        <a href="#book">Book</a>
+        <a href="#faq">FAQ</a>
+      </nav>
     </div>
-    <p class="lede">Hand tuning and base repair for skis and snowboards in Boulder. Pick your service, get your price up front, and I can pick up and drop off your gear inside city limits.</p>
-    <div class="proof"><span>All work done by hand</span><span>5 years of experience</span><span>Boulder, CO</span></div>
+    <h1>Ski &amp; snowboard repair, <em>done by hand.</em></h1>
+    <p class="lede">Tuning and base repair in Boulder. Pick only what your gear needs, see your price up front, and I can pick up and drop off anywhere inside city limits.</p>
+    <div class="proof"><span>5 years of experience</span><span>All work done by hand</span><span>Boulder, CO</span></div>
     <div class="cta">
       <a class="btn btn-gold" href="#quote">Build your quote</a>
-      <a class="btn btn-ghost" href="#photos">Not sure? Send photos</a>
+      <a class="btn btn-glass" href="#photos">Not sure? Send photos</a>
     </div>
   </div>
   <svg class="mountains" viewBox="0 0 1200 160" preserveAspectRatio="none" aria-hidden="true">
@@ -213,13 +202,10 @@ html { scroll-behavior: smooth; }
       <p>Pick only what your gear needs. Prices are per pair of skis or per snowboard.</p>
     </div>
     <div class="svcs" id="svcs"></div>
-    <article class="tier t-season" style="margin-top:1rem">
-      <div class="info">
-        <h3>Season Pass</h3>
-        <p class="why">Any service, as often as you want, all season long, for one pair of skis or one snowboard. Ride a lot? It pays for itself fast.</p>
-      </div>
-      <div class="tag"><span>$100<small>per season</small></span></div>
-    </article>
+    <div class="season">
+      <div><h3>Season Pass</h3><p>Any service, as often as you want, all season long, for one pair of skis or one snowboard. Ride a lot? It pays for itself fast.</p></div>
+      <div class="big">$100<small>per item, per season</small></div>
+    </div>
     <div class="addon">
       <strong>Pickup &amp; dropoff, $15</strong>
       <span>I'll grab your gear and bring it back, anywhere inside Boulder city limits. One fee per order, no matter how many pieces.</span>
@@ -262,7 +248,7 @@ html { scroll-behavior: smooth; }
         <p>Snap a shot of the whole base, plus close-ups of any scratches, gouges or rusty edges. I'll look and text you back with what I'd recommend and the price.</p>
         <p class="fine" style="margin-top:.75rem">Tip: lay the ski or board base-up in good light and shoot straight down.</p>
       </div>
-      <form class="panel" id="photo-form">
+      <form class="panel card" id="photo-form">
         <h3>Photo check</h3>
         <label class="drop" id="drop" for="photo-input">
           <strong>Choose photos or drag them here</strong>
@@ -287,7 +273,7 @@ html { scroll-behavior: smooth; }
 
   <section id="book" class="wrap">
     <div class="two">
-      <form class="panel" id="book-form">
+      <form class="panel card" id="book-form">
         <h3>Book a time</h3>
         <div class="row2">
           <div class="field"><label for="b-name">Your name</label><input id="b-name" autocomplete="name" required></div>
@@ -328,10 +314,10 @@ html { scroll-behavior: smooth; }
   <section id="faq" class="wrap">
     <div class="sec-head"><span class="eyebrow">Questions</span><h2>Good to know</h2></div>
     <div class="faq">
-      <details><summary>How often should I get my skis or board waxed?</summary><p>Every 4–6 days on the snow is a good rule. If the base looks dry and white near the edges, it's time.</p></details>
-      <details><summary>What's P-Tex and epoxy repair?</summary><p>P-Tex fills scratches and gouges in the base so it glides and doesn't soak up water. Epoxy repairs cracks and chips in the top layer so water can't get into the core.</p></details>
-      <details><summary>How does the Season Service work?</summary><p>One payment of $100 covers every service, as many times as you need, on that pair of skis or snowboard for the whole season.</p></details>
-      <details><summary>How do I pay?</summary><p>Card, cash, Venmo or Zelle when you get your gear back.</p></details>
+      <details class="card"><summary>How often should I get my skis or board waxed?</summary><p>Every 4–6 days on the snow is a good rule. If the base looks dry and white near the edges, it's time.</p></details>
+      <details class="card"><summary>What's P-Tex and epoxy repair?</summary><p>P-Tex fills scratches and gouges in the base so it glides and doesn't soak up water. Epoxy repairs cracks and chips in the top layer so water can't get into the core.</p></details>
+      <details class="card"><summary>How does the Season Service work?</summary><p>One payment of $100 covers every service, as many times as you need, on that pair of skis or snowboard for the whole season.</p></details>
+      <details class="card"><summary>How do I pay?</summary><p>Card, cash, Venmo or Zelle when you get your gear back.</p></details>
     </div>
   </section>
 </main>
@@ -361,7 +347,7 @@ html { scroll-behavior: smooth; }
   var byId = {}; SERVICES.forEach(function (t) { byId[t.id] = t; });
 
   $("svcs").innerHTML = SERVICES.map(function (t) {
-    return '<article class="svc"><h3>' + t.name + '</h3><span class="price">' + money(t.price) + "</span><p>" + t.why + "</p></article>";
+    return '<article class="svc card"><span class="price">' + money(t.price) + '</span><h3>' + t.name + "</h3><p>" + t.why + "</p></article>";
   }).join("");
 
   // Starts with one example item so the ticket shows how it works.
@@ -373,7 +359,7 @@ html { scroll-behavior: smooth; }
 
   function renderGear() {
     $("gear").innerHTML = gear.map(function (g, i) {
-      return '<div class="gear"><div class="gear-top"><div class="kind">' +
+      return '<div class="gear card"><div class="gear-top"><div class="kind">' +
         ["Skis", "Snowboard"].map(function (k) {
           return '<button type="button" class="chip" data-i="' + i + '" data-kind="' + k + '" aria-pressed="' + (g.kind === k) + '">' + k + "</button>";
         }).join("") + '</div><button type="button" class="remove" data-rm="' + i + '">Remove</button></div>' +
