@@ -146,6 +146,8 @@ section { padding-block: 3.5rem 1rem; }
 .thumbs img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); }
 .result { display: grid; gap: .6rem; padding: 1rem; border-radius: 12px; background: var(--bg); border: 1.5px solid var(--accent); }
 .result pre { margin: 0; white-space: pre-wrap; font: .9rem/1.45 ui-monospace, "SF Mono", Menlo, monospace; overflow-x: auto; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.btn[disabled] { opacity: .6; cursor: wait; transform: none; }
 .phone { font-family: var(--font-display); font-weight: 800; font-size: 1.7rem; letter-spacing: .03em; user-select: all; font-variant-numeric: tabular-nums; }
 
 .faq { display: grid; gap: .6rem; max-width: 46rem; }
@@ -261,11 +263,11 @@ html { scroll-behavior: smooth; }
           <div class="field"><label for="p-phone">Phone</label><input id="p-phone" type="tel" autocomplete="tel" required></div>
         </div>
         <div class="field"><label for="p-notes">What's going on with it?</label><textarea id="p-notes" placeholder="Hit a rock on Mary Jane, there's a deep scratch near the tip."></textarea></div>
-        <button class="btn btn-ink" type="submit">Send photos to Jamo</button>
+        <input type="text" class="hp" id="p-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button class="btn btn-ink" type="submit" id="photo-send">Send photos to Jamo</button>
         <div class="result" id="photo-result" hidden>
-          <strong>Almost there.</strong>
-          <p>Photo sending goes live once the site is published. For now, text your photos to:</p>
-          <span class="phone">720-545-8843</span>
+          <strong id="photo-head"></strong>
+          <p id="photo-msg"></p>
         </div>
       </form>
     </div>
@@ -290,7 +292,12 @@ html { scroll-behavior: smooth; }
         </div>
         <div class="field" id="addr-field" hidden><label for="b-addr">Pickup address in Boulder</label><input id="b-addr" autocomplete="street-address"></div>
         <div class="field"><label for="b-notes">Anything else?</label><textarea id="b-notes" placeholder="Need them back by Friday for a trip."></textarea></div>
-        <button class="btn btn-ink" type="submit">Send booking request</button>
+        <input type="text" class="hp" id="b-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button class="btn btn-ink" type="submit" id="book-send">Send booking request</button>
+        <div class="result" id="book-done" hidden>
+          <strong>Got it, thanks!</strong>
+          <p>Your request is in. I'll text you soon to confirm your time.</p>
+        </div>
         <div class="result" id="book-result" hidden>
           <strong>Here's your request.</strong>
           <pre id="book-text"></pre>
@@ -298,7 +305,7 @@ html { scroll-behavior: smooth; }
             <button type="button" class="btn btn-line" id="copy-book">Copy</button>
             <a class="btn btn-gold" id="sms-book" href="sms:+17205458843">Open in Messages</a>
           </div>
-          <p class="fine">Online booking goes live once the site is published. Until then, text this to <span class="phone" style="font-size:1rem">720-545-8843</span>.</p>
+          <p class="fine">Online booking isn't connected yet. Until then, text this to <span class="phone" style="font-size:1rem">720-545-8843</span>.</p>
         </div>
       </form>
       <div class="sec-head" style="margin:0">
@@ -341,6 +348,9 @@ html { scroll-behavior: smooth; }
   var SEASON = 100;
   var PICKUP = 15;
   var PHONE = "+17205458843";
+  // Paste the Google Apps Script web app URL here to turn on online booking and photo sending.
+  // While it's empty, the forms fall back to "text it to Jamo".
+  var INBOX_URL = "";
 
   var $ = function (id) { return document.getElementById(id); };
   var money = function (n) { return "$" + n; };
@@ -419,20 +429,52 @@ html { scroll-behavior: smooth; }
   var d = new Date(); d.setDate(d.getDate() + 1);
   $("b-date").value = d.toISOString().slice(0, 10);
 
-  $("book-form").addEventListener("submit", function (e) {
-    e.preventDefault();
+  function orderText() {
+    var t = totals();
+    return gear.map(function (g) { return "- " + g.kind + ": " + describe(g) + " (" + money(itemPrice(g)) + ")"; }).join("\n") +
+      (t.pick ? "\n- Pickup & dropoff (" + money(PICKUP) + ")" : "");
+  }
+
+  function send(payload) {
+    return fetch(INBOX_URL, { method: "POST", body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) { if (!res.ok) throw new Error(res.error || "Request failed"); });
+  }
+
+  function busy(btn, on, label) { btn.disabled = on; btn.textContent = label; }
+
+  function showBookFallback() {
     var t = totals();
     var txt = "Hi Jamo, I'd like to book a tune.\n" +
       "Name: " + $("b-name").value + "\nPhone: " + $("b-phone").value +
       "\nDay: " + $("b-date").value + ", " + $("b-time").value +
       "\n" + ($("b-how").value === "pickup" ? "Pickup at: " + ($("b-addr").value || "(address)") : "I'll drop it off") +
-      "\n\nOrder:\n" + gear.map(function (g) { return "- " + g.kind + ": " + describe(g) + " (" + money(itemPrice(g)) + ")"; }).join("\n") +
-      (t.pick ? "\n- Pickup & dropoff (" + money(PICKUP) + ")" : "") +
+      "\n\nOrder:\n" + orderText() +
       "\nEstimated total: " + money(t.total) +
       ($("b-notes").value ? "\n\nNotes: " + $("b-notes").value : "");
     $("book-text").textContent = txt;
     $("sms-book").href = "sms:" + PHONE + "?&body=" + encodeURIComponent(txt);
     $("book-result").hidden = false;
+  }
+
+  $("book-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    $("book-done").hidden = true; $("book-result").hidden = true;
+    if (!INBOX_URL) { showBookFallback(); return; }
+    var btn = $("book-send");
+    busy(btn, true, "Sending...");
+    send({
+      type: "booking", website: $("b-hp").value,
+      name: $("b-name").value, phone: $("b-phone").value,
+      day: $("b-date").value, time: $("b-time").value,
+      method: $("b-how").value === "pickup" ? "Pickup" : "Drop-off", address: $("b-addr").value,
+      order: orderText(), total: money(totals().total), notes: $("b-notes").value
+    }).then(function () {
+      $("book-done").hidden = false; busy(btn, false, "Send booking request");
+    }, function () {
+      // If sending fails, give them the text version so the request isn't lost.
+      showBookFallback(); busy(btn, false, "Send booking request");
+    });
   });
   $("copy-book").addEventListener("click", function () {
     var b = this, txt = $("book-text").textContent;
@@ -441,20 +483,55 @@ html { scroll-behavior: smooth; }
     try { navigator.clipboard.writeText(txt).then(done, fallback); } catch (err) { fallback(); }
   });
 
-  // Photo previews (local only until the upload service is connected).
+  // Photos are shrunk in the browser before sending so uploads stay fast on phones.
+  var photoFiles = [];
   function showFiles(files) {
+    photoFiles = Array.prototype.filter.call(files, function (f) { return /^image\//.test(f.type); }).slice(0, 5);
     $("thumbs").innerHTML = "";
-    Array.prototype.slice.call(files, 0, 5).forEach(function (f) {
-      if (!/^image\//.test(f.type)) return;
+    photoFiles.forEach(function (f) {
       var img = document.createElement("img"); img.alt = f.name; img.src = URL.createObjectURL(f); $("thumbs").appendChild(img);
     });
   }
+  function shrink(file) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () {
+        var scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+        var c = document.createElement("canvas");
+        c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        resolve({ mime: "image/jpeg", data: c.toDataURL("image/jpeg", 0.85).split(",")[1] });
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
+  function photoResult(head, msg) { $("photo-head").textContent = head; $("photo-msg").innerHTML = msg; $("photo-result").hidden = false; }
+  var textUs = 'Text your photos to <span class="phone" style="font-size:1.1rem">720-545-8843</span> instead.';
+
   $("photo-input").addEventListener("change", function () { showFiles(this.files); });
   var drop = $("drop");
   ["dragenter", "dragover"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
   ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
   drop.addEventListener("drop", function (e) { showFiles(e.dataTransfer.files); });
-  $("photo-form").addEventListener("submit", function (e) { e.preventDefault(); $("photo-result").hidden = false; });
+  $("photo-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    $("photo-result").hidden = true;
+    if (!INBOX_URL) { photoResult("Almost there.", "Photo sending isn't connected yet. " + textUs); return; }
+    if (!photoFiles.length) { photoResult("Add a photo first.", "Tap the box above to choose photos from your phone or computer."); return; }
+    var btn = $("photo-send");
+    busy(btn, true, "Sending photos...");
+    Promise.all(photoFiles.map(shrink)).then(function (photos) {
+      return send({ type: "photos", website: $("p-hp").value, name: $("p-name").value, phone: $("p-phone").value, notes: $("p-notes").value, photos: photos });
+    }).then(function () {
+      photoResult("Got your photos!", "I'll take a look and text you back with what I'd recommend.");
+      $("photo-form").reset(); showFiles([]);
+      busy(btn, false, "Send photos to Jamo");
+    }, function () {
+      photoResult("That didn't go through.", "Something went wrong sending your photos. " + textUs);
+      busy(btn, false, "Send photos to Jamo");
+    });
+  });
 
   renderGear();
 })();
