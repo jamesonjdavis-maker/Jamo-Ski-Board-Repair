@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jamo's Ski &amp; Snowboard Repair</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Hand-done ski and snowboard tuning and repair in Boulder, CO. Waxing, edge sharpening, P-Tex and epoxy base repair, with pickup and dropoff inside Boulder city limits.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@600;800&family=Fjalla+One&family=Outfit:wght@400;500;600&display=swap">
+<style>
+/* Layout: flyer-blue masthead band, then a ski-shop counter: service "tags" on the left, the running ticket on the right. */
+:root {
+  --bg: #eef4f8;
+  --surface: #ffffff;
+  --ink: #12293b;
+  --muted: #4b6578;
+  --line: #c9d9e4;
+  --band: #2d5f80;
+  --band-deep: #12293b;
+  --ice: #a9d6f0;
+  --bronze: #a87a2c;
+  --silver: #9a9fa3;
+  --gold: #e9c25e;
+  --season: #cfd6db;
+  --on-tag: #12293b;
+  --accent: #1f6f9f;
+  --font-display: "League Spartan", "Futura", "Avenir Next", system-ui, sans-serif;
+  --font-label: "Fjalla One", "Oswald", "Arial Narrow", sans-serif-condensed, sans-serif;
+  --font-body: "Outfit", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1c28; --surface: #132a3b; --ink: #e6f1f8; --muted: #9db6c7; --line: #24435a;
+    --band: #1d4864; --band-deep: #081520; --ice: #7fbfe4; --accent: #7fc3ea; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c1c28; --surface: #132a3b; --ink: #e6f1f8; --muted: #9db6c7; --line: #24435a;
+  --band: #1d4864; --band-deep: #081520; --ice: #7fbfe4; --accent: #7fc3ea; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 1.0625rem; line-height: 1.55; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.05; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.wrap { max-width: 68rem; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* Masthead */
+.mast { background: linear-gradient(180deg, var(--band) 0%, var(--band) 60%, var(--band-deep) 100%); color: #fff; position: relative; overflow: hidden; }
+.mast .wrap { padding-block: 2.5rem 7rem; position: relative; z-index: 1; display: grid; gap: 1.25rem; }
+.mast nav { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; font-weight: 500; }
+.mast nav a { color: #fff; text-decoration: none; opacity: .85; }
+.mast nav a:hover { opacity: 1; text-decoration: underline; }
+.brand { display: grid; gap: .1rem; margin-top: 1rem; }
+.brand .jamos { font-size: clamp(3.2rem, 11vw, 6.5rem); font-weight: 800; color: var(--band-deep); letter-spacing: -.02em; }
+.brand .ski { font-size: clamp(1.9rem, 6.4vw, 3.9rem); font-weight: 800; color: #fff; }
+.brand .repair { font-size: clamp(2rem, 6vw, 3.6rem); font-weight: 800; color: var(--band-deep); }
+.mast .lede { max-width: 34rem; font-size: 1.15rem; color: #e3f1fa; }
+.mast .cta { display: flex; flex-wrap: wrap; gap: .75rem; }
+.btn { display: inline-flex; align-items: center; gap: .5rem; font: 600 1rem var(--font-body); padding: .75rem 1.2rem; border-radius: 999px; border: 2px solid transparent; cursor: pointer; text-decoration: none; }
+.btn-gold { background: var(--gold); color: var(--on-tag); }
+.btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.6); }
+.btn-ink { background: var(--ink); color: var(--bg); }
+.btn-line { background: transparent; color: var(--ink); border-color: var(--line); }
+.mountains { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 9rem; display: block; }
+.mountains .back { fill: var(--ice); opacity: .55; }
+.mountains .front { fill: var(--bg); }
+.proof { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; font-family: var(--font-label); letter-spacing: .06em; text-transform: uppercase; color: var(--ice); }
+
+section { padding-block: 3.5rem 1rem; }
+.eyebrow { font-family: var(--font-label); text-transform: uppercase; letter-spacing: .1em; color: var(--accent); font-size: .95rem; }
+.sec-head { display: grid; gap: .4rem; margin-bottom: 1.75rem; max-width: 40rem; }
+.sec-head h2 { font-size: clamp(1.9rem, 4.5vw, 2.8rem); }
+.sec-head p { color: var(--muted); }
+
+/* Services: price tags like the flyer */
+.tiers { display: grid; gap: .9rem; }
+.tier { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; background: var(--surface); border: 1px solid var(--line); border-radius: .5rem; overflow: hidden; }
+.tier .info { padding: 1rem 1.25rem; display: grid; gap: .3rem; min-width: 0; }
+.tier h3 { font-family: var(--font-label); font-weight: 400; font-size: 1.6rem; letter-spacing: .01em; }
+.tier ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: .35rem; }
+.tier li { font-size: .9rem; padding: .15rem .6rem; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
+.tier .why { color: var(--muted); font-size: .95rem; }
+.tag { display: grid; place-items: center; min-width: 7.5rem; padding: 0 1.5rem 0 1.25rem; font-family: var(--font-display); font-weight: 800; font-size: 2rem; color: var(--on-tag); border-radius: 0 999px 999px 0; font-variant-numeric: tabular-nums; }
+.tag small { display: block; font: 500 .75rem var(--font-body); text-align: center; margin-top: -.3rem; }
+.t-bronze .tag { background: var(--bronze); color: #fff; }
+.t-silver .tag { background: var(--silver); color: #fff; }
+.t-gold .tag { background: var(--gold); }
+.t-season .tag { background: var(--season); }
+.svcs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: .9rem; }
+.svc { background: var(--surface); border: 1px solid var(--line); border-radius: .5rem; padding: 1rem 1.25rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .25rem 1rem; align-items: baseline; }
+.svc h3 { font-family: var(--font-label); font-weight: 400; font-size: 1.35rem; }
+.svc .price { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.svc p { grid-column: 1 / -1; color: var(--muted); font-size: .95rem; }
+.checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+.checks label { display: flex; gap: .6rem; align-items: center; justify-content: space-between; padding: .55rem .75rem; border-radius: .4rem; border: 2px solid var(--line); background: var(--bg); cursor: pointer; }
+.checks label span { display: flex; gap: .5rem; align-items: center; min-width: 0; }
+.checks input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); flex: none; }
+.checks em { font-style: normal; font-variant-numeric: tabular-nums; color: var(--muted); }
+.checks label:has(input:checked) { border-color: var(--accent); }
+.checks.covered em { text-decoration: line-through; }
+.season-pick { display: flex; gap: .6rem; align-items: center; padding: .6rem .75rem; border-radius: .4rem; background: var(--season); color: var(--on-tag); font-weight: 600; cursor: pointer; }
+.season-pick input { width: 1.1rem; height: 1.1rem; }
+.addon { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: baseline; padding: 1rem 1.25rem; border: 2px dashed var(--line); border-radius: .5rem; }
+.addon strong { font-family: var(--font-label); font-weight: 400; font-size: 1.25rem; }
+
+/* Quote builder */
+.builder { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.gear-list { display: grid; gap: .9rem; }
+.gear { background: var(--surface); border: 1px solid var(--line); border-radius: .5rem; padding: 1rem 1.1rem; display: grid; gap: .8rem; }
+.gear-top { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: space-between; }
+.gear-top .kind { display: flex; gap: .35rem; }
+.chip { font: 500 .95rem var(--font-body); padding: .4rem .85rem; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.remove { background: none; border: none; color: var(--muted); font: 500 .9rem var(--font-body); cursor: pointer; text-decoration: underline; }
+.pick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; }
+.pick label { position: relative; cursor: pointer; }
+.pick input { position: absolute; opacity: 0; inset: 0; }
+.pick span { display: grid; gap: .05rem; text-align: center; padding: .55rem .25rem; border-radius: .4rem; border: 2px solid var(--line); background: var(--bg); }
+.pick b { font-family: var(--font-label); font-weight: 400; font-size: 1.05rem; }
+.pick em { font-style: normal; font-variant-numeric: tabular-nums; color: var(--muted); font-size: .9rem; }
+.pick input:checked + span { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.pick input:focus-visible + span { outline: 3px solid var(--gold); outline-offset: 2px; }
+.add-row { display: flex; flex-wrap: wrap; gap: .6rem; }
+
+.ticket { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); background: var(--surface); border: 1px solid var(--line); border-radius: .5rem; padding: 1.25rem; display: grid; gap: .9rem; }
+.ticket h3 { font-size: 1.5rem; }
+.lines { margin: 0; padding: 0; list-style: none; display: grid; gap: .4rem; font-variant-numeric: tabular-nums; }
+.lines li { display: flex; justify-content: space-between; gap: 1rem; }
+.lines li span:first-child { min-width: 0; }
+.lines .empty { color: var(--muted); }
+.toggle { display: flex; gap: .6rem; align-items: flex-start; padding-block: .75rem; border-block: 1px solid var(--line); cursor: pointer; }
+.toggle input { width: 1.2rem; height: 1.2rem; margin-top: .2rem; accent-color: var(--accent); }
+.total { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-display); font-weight: 800; font-size: 2rem; font-variant-numeric: tabular-nums; }
+.total span:first-child { font-size: 1.1rem; font-weight: 600; }
+.fine { color: var(--muted); font-size: .85rem; }
+
+/* Forms */
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: .5rem; padding: 1.25rem; display: grid; gap: .9rem; }
+.panel h3 { font-size: 1.5rem; }
+.field { display: grid; gap: .3rem; }
+.field label { font-weight: 600; font-size: .95rem; }
+.field input, .field textarea, .field select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: .4rem; padding: .6rem .7rem; width: 100%; }
+.field textarea { min-height: 6rem; resize: vertical; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .75rem; }
+.drop { border: 2px dashed var(--line); border-radius: .5rem; padding: 1.25rem; text-align: center; display: grid; gap: .4rem; cursor: pointer; background: var(--bg); }
+.drop.over { border-color: var(--accent); }
+.thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: .5rem; }
+.thumbs img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: .35rem; border: 1px solid var(--line); }
+.result { display: grid; gap: .6rem; padding: 1rem; border-radius: .5rem; background: var(--bg); border: 1px solid var(--accent); }
+.result pre { margin: 0; white-space: pre-wrap; font: .9rem/1.45 ui-monospace, "SF Mono", Menlo, monospace; overflow-x: auto; }
+.phone { font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; letter-spacing: .04em; user-select: all; font-variant-numeric: tabular-nums; }
+
+.faq { display: grid; gap: .6rem; max-width: 46rem; }
+.faq details { background: var(--surface); border: 1px solid var(--line); border-radius: .5rem; padding: .85rem 1.1rem; }
+.faq summary { font-weight: 600; cursor: pointer; }
+.faq details p { margin-top: .5rem; color: var(--muted); }
+
+footer { margin-top: 4rem; background: var(--band-deep); color: #d5e6f1; }
+footer .wrap { padding-block: 2rem; display: flex; flex-wrap: wrap; gap: 1rem 2rem; justify-content: space-between; }
+footer strong { font-family: var(--font-display); color: #fff; font-size: 1.2rem; }
+
+@media (max-width: 760px) {
+  .builder, .two { grid-template-columns: minmax(0, 1fr); }
+  .ticket { position: static; }
+  .checks { grid-template-columns: minmax(0, 1fr); }
+  .tag { min-width: 5.5rem; font-size: 1.6rem; padding: 0 1rem 0 .9rem; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+html { scroll-behavior: smooth; }
+</style>
+</head>
+<body>
+<header class="mast">
+  <div class="wrap">
+    <nav aria-label="Sections">
+      <a href="#services">Services</a>
+      <a href="#quote">Build a quote</a>
+      <a href="#photos">Send photos</a>
+      <a href="#book">Book</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="brand" aria-label="Jamo's Ski and Snowboard Repair">
+      <span class="jamos">Jamo's</span>
+      <span class="ski">SKI &amp; SNOWBOARD</span>
+      <span class="repair">Repair</span>
+    </div>
+    <p class="lede">Hand tuning and base repair for skis and snowboards in Boulder. Pick your service, get your price up front, and I can pick up and drop off your gear inside city limits.</p>
+    <div class="proof"><span>All work done by hand</span><span>5 years of experience</span><span>Boulder, CO</span></div>
+    <div class="cta">
+      <a class="btn btn-gold" href="#quote">Build your quote</a>
+      <a class="btn btn-ghost" href="#photos">Not sure? Send photos</a>
+    </div>
+  </div>
+  <svg class="mountains" viewBox="0 0 1200 160" preserveAspectRatio="none" aria-hidden="true">
+    <path class="back" d="M0 120 L120 60 L210 95 L330 20 L430 85 L520 50 L640 110 L760 30 L880 90 L990 45 L1100 100 L1200 70 L1200 160 L0 160 Z"/>
+    <path class="front" d="M0 140 L90 110 L190 132 L300 80 L400 125 L520 98 L610 135 L720 92 L830 128 L960 85 L1080 125 L1200 105 L1200 160 L0 160 Z"/>
+  </svg>
+</header>
+
+<main>
+  <section id="services" class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">2025–26 season pricing</span>
+      <h2>Services</h2>
+      <p>Pick only what your gear needs. Prices are per pair of skis or per snowboard.</p>
+    </div>
+    <div class="svcs" id="svcs"></div>
+    <article class="tier t-season" style="margin-top:1rem">
+      <div class="info">
+        <h3>Season Pass</h3>
+        <p class="why">Any service, as often as you want, all season long, for one pair of skis or one snowboard. Ride a lot? It pays for itself fast.</p>
+      </div>
+      <div class="tag"><span>$100<small>per season</small></span></div>
+    </article>
+    <div class="addon">
+      <strong>Pickup &amp; dropoff, $15</strong>
+      <span>I'll grab your gear and bring it back, anywhere inside Boulder city limits. One fee per order, no matter how many pieces.</span>
+    </div>
+  </section>
+
+  <section id="quote" class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Build a quote</span>
+      <h2>Add your gear, check what it needs, see your total</h2>
+      <p>Add each pair of skis or snowboard and check the services you want. Your total updates as you go, then send it to me to lock in a time.</p>
+    </div>
+    <div class="builder">
+      <div class="gear-list">
+        <div id="gear" class="gear-list"></div>
+        <div class="add-row">
+          <button type="button" class="btn btn-line" data-add="Skis">+ Add skis</button>
+          <button type="button" class="btn btn-line" data-add="Snowboard">+ Add a snowboard</button>
+        </div>
+      </div>
+      <aside class="ticket" aria-live="polite">
+        <h3>Your ticket</h3>
+        <ul class="lines" id="lines"></ul>
+        <label class="toggle" for="pickup">
+          <input type="checkbox" id="pickup">
+          <span><strong>Add pickup &amp; dropoff, $15</strong><br><span class="fine">Inside Boulder city limits</span></span>
+        </label>
+        <div class="total"><span>Estimated total</span><span id="total">$0</span></div>
+        <a class="btn btn-ink" href="#book" style="justify-content:center">Book this order</a>
+        <p class="fine">Final price is confirmed when I see your gear. Big core shots or edge damage may need extra work, and I'll always ask before doing it.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section id="photos" class="wrap">
+    <div class="two">
+      <div class="sec-head" style="margin:0">
+        <span class="eyebrow">Not sure what you need?</span>
+        <h2>Send me photos of your base and edges</h2>
+        <p>Snap a shot of the whole base, plus close-ups of any scratches, gouges or rusty edges. I'll look and text you back with what I'd recommend and the price.</p>
+        <p class="fine" style="margin-top:.75rem">Tip: lay the ski or board base-up in good light and shoot straight down.</p>
+      </div>
+      <form class="panel" id="photo-form">
+        <h3>Photo check</h3>
+        <label class="drop" id="drop" for="photo-input">
+          <strong>Choose photos or drag them here</strong>
+          <span class="fine">JPG or PNG, up to 5 photos</span>
+          <input type="file" id="photo-input" accept="image/*" multiple hidden>
+        </label>
+        <div class="thumbs" id="thumbs"></div>
+        <div class="row2">
+          <div class="field"><label for="p-name">Your name</label><input id="p-name" autocomplete="name" required></div>
+          <div class="field"><label for="p-phone">Phone</label><input id="p-phone" type="tel" autocomplete="tel" required></div>
+        </div>
+        <div class="field"><label for="p-notes">What's going on with it?</label><textarea id="p-notes" placeholder="Hit a rock on Mary Jane, there's a deep scratch near the tip."></textarea></div>
+        <button class="btn btn-ink" type="submit">Send photos to Jamo</button>
+        <div class="result" id="photo-result" hidden>
+          <strong>Almost there.</strong>
+          <p>Photo sending goes live once the site is published. For now, text your photos to:</p>
+          <span class="phone">720-545-8843</span>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section id="book" class="wrap">
+    <div class="two">
+      <form class="panel" id="book-form">
+        <h3>Book a time</h3>
+        <div class="row2">
+          <div class="field"><label for="b-name">Your name</label><input id="b-name" autocomplete="name" required></div>
+          <div class="field"><label for="b-phone">Phone</label><input id="b-phone" type="tel" autocomplete="tel" required></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="b-date">Preferred day</label><input id="b-date" type="date" required></div>
+          <div class="field"><label for="b-time">Time window</label>
+            <select id="b-time"><option>Morning (8–11)</option><option>Midday (11–2)</option><option selected>Afternoon (2–5)</option><option>Evening (5–8)</option></select>
+          </div>
+        </div>
+        <div class="field"><label for="b-how">Drop-off or pickup?</label>
+          <select id="b-how"><option value="drop">I'll drop it off</option><option value="pickup">Pick it up from me ($15)</option></select>
+        </div>
+        <div class="field" id="addr-field" hidden><label for="b-addr">Pickup address in Boulder</label><input id="b-addr" autocomplete="street-address"></div>
+        <div class="field"><label for="b-notes">Anything else?</label><textarea id="b-notes" placeholder="Need them back by Friday for a trip."></textarea></div>
+        <button class="btn btn-ink" type="submit">Send booking request</button>
+        <div class="result" id="book-result" hidden>
+          <strong>Here's your request.</strong>
+          <pre id="book-text"></pre>
+          <div class="add-row">
+            <button type="button" class="btn btn-line" id="copy-book">Copy</button>
+            <a class="btn btn-gold" id="sms-book" href="sms:+17205458843">Open in Messages</a>
+          </div>
+          <p class="fine">Online booking goes live once the site is published. Until then, text this to <span class="phone" style="font-size:1rem">720-545-8843</span>.</p>
+        </div>
+      </form>
+      <div class="sec-head" style="margin:0">
+        <span class="eyebrow">Scheduling</span>
+        <h2>Pick a day, I'll confirm by text</h2>
+        <p>Your quote from above is included automatically. I'll text you to confirm the time, and most tunes are ready in 1–2 days.</p>
+        <p style="margin-top:1rem">Rather just talk? Call or text me.</p>
+        <span class="phone">720-545-8843</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="wrap">
+    <div class="sec-head"><span class="eyebrow">Questions</span><h2>Good to know</h2></div>
+    <div class="faq">
+      <details><summary>How often should I get my skis or board waxed?</summary><p>Every 4–6 days on the snow is a good rule. If the base looks dry and white near the edges, it's time.</p></details>
+      <details><summary>What's P-Tex and epoxy repair?</summary><p>P-Tex fills scratches and gouges in the base so it glides and doesn't soak up water. Epoxy repairs cracks and chips in the top layer so water can't get into the core.</p></details>
+      <details><summary>How does the Season Service work?</summary><p>One payment of $100 covers every service, as many times as you need, on that pair of skis or snowboard for the whole season.</p></details>
+      <details><summary>How do I pay?</summary><p>Card, cash, Venmo or Zelle when you get your gear back.</p></details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div><strong>Jamo's Ski &amp; Snowboard Repair</strong><br>Boulder, Colorado</div>
+    <div>Call or text: 720-545-8843<br>All work done by hand</div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // Prices confirmed by Jamo, Oct 2026. Change them here and the whole page updates.
+  var SERVICES = [
+    { id: "cleanwax", name: "Cleaning & waxing", price: 20, why: "Strips old wax and dirt, then a fresh hot wax by hand for speed and a protected base." },
+    { id: "edge", name: "Edge sharpening", price: 10, why: "Sharp edges for grip on hardpack and ice." },
+    { id: "ptex", name: "Base repair (P-Tex)", price: 20, why: "Fills scratches and gouges in the base." },
+    { id: "epoxy", name: "Top layer repair (epoxy)", price: 20, why: "Seals chips and cracks in the top so water stays out of the core." }
+  ];
+  var SEASON = 100;
+  var PICKUP = 15;
+  var PHONE = "+17205458843";
+
+  var $ = function (id) { return document.getElementById(id); };
+  var money = function (n) { return "$" + n; };
+  var byId = {}; SERVICES.forEach(function (t) { byId[t.id] = t; });
+
+  $("svcs").innerHTML = SERVICES.map(function (t) {
+    return '<article class="svc"><h3>' + t.name + '</h3><span class="price">' + money(t.price) + "</span><p>" + t.why + "</p></article>";
+  }).join("");
+
+  // Starts with one example item so the ticket shows how it works.
+  var gear = [{ kind: "Skis", picks: ["cleanwax", "edge"], season: false }];
+
+  function itemPrice(g) {
+    return g.season ? SEASON : g.picks.reduce(function (s, id) { return s + byId[id].price; }, 0);
+  }
+
+  function renderGear() {
+    $("gear").innerHTML = gear.map(function (g, i) {
+      return '<div class="gear"><div class="gear-top"><div class="kind">' +
+        ["Skis", "Snowboard"].map(function (k) {
+          return '<button type="button" class="chip" data-i="' + i + '" data-kind="' + k + '" aria-pressed="' + (g.kind === k) + '">' + k + "</button>";
+        }).join("") + '</div><button type="button" class="remove" data-rm="' + i + '">Remove</button></div>' +
+        '<div class="checks' + (g.season ? " covered" : "") + '" role="group" aria-label="Services for item ' + (i + 1) + '">' +
+        SERVICES.map(function (t) {
+          return '<label><span><input type="checkbox" data-i="' + i + '" value="' + t.id + '"' + (g.picks.indexOf(t.id) > -1 ? " checked" : "") + ">" + t.name + "</span><em>" + money(t.price) + "</em></label>";
+        }).join("") + "</div>" +
+        '<label class="season-pick"><input type="checkbox" data-season="' + i + '"' + (g.season ? " checked" : "") + ">Season Pass, $100: everything above, all season</label></div>";
+    }).join("");
+    renderTicket();
+  }
+
+  function totals() {
+    var sub = gear.reduce(function (s, g) { return s + itemPrice(g); }, 0);
+    var pick = $("pickup").checked ? PICKUP : 0;
+    return { sub: sub, pick: pick, total: sub + pick };
+  }
+
+  function describe(g) {
+    if (g.season) return "Season Pass";
+    return g.picks.length ? g.picks.map(function (id) { return byId[id].name; }).join(", ") : "nothing checked yet";
+  }
+
+  function renderTicket() {
+    var t = totals();
+    $("lines").innerHTML = gear.length ? gear.map(function (g) {
+      return "<li><span>" + g.kind + ": " + describe(g) + "</span><span>" + money(itemPrice(g)) + "</span></li>";
+    }).join("") + (t.pick ? "<li><span>Pickup &amp; dropoff</span><span>" + money(PICKUP) + "</span></li>" : "")
+      : '<li class="empty">Add skis or a snowboard to start.</li>';
+    $("total").textContent = money(t.total);
+  }
+
+  $("gear").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.kind) { gear[+b.dataset.i].kind = b.dataset.kind; renderGear(); }
+    if (b.dataset.rm) { gear.splice(+b.dataset.rm, 1); renderGear(); }
+  });
+  $("gear").addEventListener("change", function (e) {
+    var el = e.target;
+    if (el.dataset.season) { gear[+el.dataset.season].season = el.checked; renderGear(); return; }
+    var g = gear[+el.dataset.i]; if (!g) return;
+    g.picks = g.picks.filter(function (id) { return id !== el.value; });
+    if (el.checked) g.picks.push(el.value);
+    renderTicket();
+  });
+  document.querySelectorAll("[data-add]").forEach(function (b) {
+    b.addEventListener("click", function () { gear.push({ kind: b.dataset.add, picks: [], season: false }); renderGear(); });
+  });
+  $("pickup").addEventListener("change", function () {
+    $("b-how").value = $("pickup").checked ? "pickup" : "drop"; syncAddr(); renderTicket();
+  });
+
+  function syncAddr() { $("addr-field").hidden = $("b-how").value !== "pickup"; }
+  $("b-how").addEventListener("change", function () { $("pickup").checked = $("b-how").value === "pickup"; syncAddr(); renderTicket(); });
+
+  // Default the booking date to tomorrow.
+  var d = new Date(); d.setDate(d.getDate() + 1);
+  $("b-date").value = d.toISOString().slice(0, 10);
+
+  $("book-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var t = totals();
+    var txt = "Hi Jamo, I'd like to book a tune.\n" +
+      "Name: " + $("b-name").value + "\nPhone: " + $("b-phone").value +
+      "\nDay: " + $("b-date").value + ", " + $("b-time").value +
+      "\n" + ($("b-how").value === "pickup" ? "Pickup at: " + ($("b-addr").value || "(address)") : "I'll drop it off") +
+      "\n\nOrder:\n" + gear.map(function (g) { return "- " + g.kind + ": " + describe(g) + " (" + money(itemPrice(g)) + ")"; }).join("\n") +
+      (t.pick ? "\n- Pickup & dropoff (" + money(PICKUP) + ")" : "") +
+      "\nEstimated total: " + money(t.total) +
+      ($("b-notes").value ? "\n\nNotes: " + $("b-notes").value : "");
+    $("book-text").textContent = txt;
+    $("sms-book").href = "sms:" + PHONE + "?&body=" + encodeURIComponent(txt);
+    $("book-result").hidden = false;
+  });
+  $("copy-book").addEventListener("click", function () {
+    var b = this, txt = $("book-text").textContent;
+    var done = function () { b.textContent = "Copied"; };
+    var fallback = function () { var r = document.createRange(); r.selectNodeContents($("book-text")); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected, press copy"; };
+    try { navigator.clipboard.writeText(txt).then(done, fallback); } catch (err) { fallback(); }
+  });
+
+  // Photo previews (local only until the upload service is connected).
+  function showFiles(files) {
+    $("thumbs").innerHTML = "";
+    Array.prototype.slice.call(files, 0, 5).forEach(function (f) {
+      if (!/^image\//.test(f.type)) return;
+      var img = document.createElement("img"); img.alt = f.name; img.src = URL.createObjectURL(f); $("thumbs").appendChild(img);
+    });
+  }
+  $("photo-input").addEventListener("change", function () { showFiles(this.files); });
+  var drop = $("drop");
+  ["dragenter", "dragover"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
+  ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
+  drop.addEventListener("drop", function (e) { showFiles(e.dataTransfer.files); });
+  $("photo-form").addEventListener("submit", function (e) { e.preventDefault(); $("photo-result").hidden = false; });
+
+  renderGear();
+})();
+</script>
+</body>
+</html>
