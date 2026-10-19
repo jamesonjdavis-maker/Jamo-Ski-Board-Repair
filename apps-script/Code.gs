@@ -5,7 +5,8 @@
 
 var SHEET_NAME = "Requests";
 var FOLDER_NAME = "Jamo's Repair Photos";
-var HEADERS = ["Received", "Type", "Name", "Phone", "Day", "Time", "Drop-off / Pickup", "Pickup address", "Order", "Estimated total", "Notes", "Photos", "Status"];
+var HEADERS = ["Received", "Type", "Name", "Phone", "Day", "Time", "Drop-off / Pickup", "Pickup address", "Order", "Estimated total", "Notes", "Photos", "Status", "Amount paid ($)", "Paid with"];
+var EXPENSE_CATEGORIES = ["Wax", "P-Tex & epoxy", "Tools", "Gas & driving", "Supplies", "Website & ads", "Other"];
 
 function doPost(e) {
   try {
@@ -54,8 +55,74 @@ function getSheet_() {
     sheet.setColumnWidths(1, HEADERS.length, 150);
     var status = SpreadsheetApp.newDataValidation().requireValueInList(["New", "Texted", "Booked", "Done"], true).build();
     sheet.getRange("M2:M").setDataValidation(status);
+    formatPaidColumns_(sheet);
   }
   return sheet;
+}
+
+// Adds a "Jamo's" menu to the sheet.
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu("Jamo's").addItem("Set up money tracking", "setupMoneyTracking").addToUi();
+}
+
+// Run once. Adds "Amount paid" and "Paid with" columns to Requests, an Expenses tab,
+// and a Season Totals tab that adds up money in, expenses and profit. Safe to run again.
+function setupMoneyTracking() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var req = getSheet_();
+  req.getRange(1, 14, 1, 2).setValues([["Amount paid ($)", "Paid with"]]).setFontWeight("bold").setBackground("#12293b").setFontColor("#ffffff");
+  formatPaidColumns_(req);
+
+  var exp = ss.getSheetByName("Expenses");
+  if (!exp) {
+    exp = ss.insertSheet("Expenses");
+    exp.appendRow(["Date", "What", "Category", "Amount ($)", "Notes"]);
+    exp.setFrozenRows(1);
+    exp.getRange(1, 1, 1, 5).setFontWeight("bold").setBackground("#12293b").setFontColor("#ffffff");
+    exp.setColumnWidths(1, 5, 160);
+    exp.getRange("A2:A").setNumberFormat("m/d/yyyy").setDataValidation(SpreadsheetApp.newDataValidation().requireDate().build());
+    exp.getRange("C2:C").setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(EXPENSE_CATEGORIES, true).build());
+    exp.getRange("D2:D").setNumberFormat("$#,##0.00");
+  }
+
+  var tot = ss.getSheetByName("Season Totals");
+  if (!tot) {
+    tot = ss.insertSheet("Season Totals", 0);
+    var dates = function (col) { return col + ',">="&$B$3,' + col + ',"<"&$B$4+1'; };
+    var rows = [
+      ["Season Totals", ""],
+      ["", ""],
+      ["Season start", new Date(2026, 9, 1)],
+      ["Season end", new Date(2027, 4, 31)],
+      ["", ""],
+      ["Money in", "=SUMIFS(Requests!N:N," + dates("Requests!A:A") + ")"],
+      ["Expenses", "=SUMIFS(Expenses!D:D," + dates("Expenses!A:A") + ")"],
+      ["Profit", "=B6-B7"],
+      ["Paid jobs", "=COUNTIFS(Requests!N:N,\">0\"," + dates("Requests!A:A") + ")"],
+      ["Average per job", "=IF(B9=0,0,B6/B9)"],
+      ["", ""],
+      ["Expenses by category", ""]
+    ];
+    EXPENSE_CATEGORIES.forEach(function (c, i) {
+      rows.push([c, "=SUMIFS(Expenses!D:D,Expenses!C:C,A" + (13 + i) + "," + dates("Expenses!A:A") + ")"]);
+    });
+    tot.getRange(1, 1, rows.length, 2).setValues(rows);
+    tot.setColumnWidth(1, 200).setColumnWidth(2, 140);
+    tot.getRange("A1").setFontSize(16).setFontWeight("bold");
+    tot.getRange("B3:B4").setNumberFormat("m/d/yyyy").setBackground("#fff7d6");
+    tot.getRange("B6:B8").setNumberFormat("$#,##0.00");
+    tot.getRange("B10").setNumberFormat("$#,##0.00");
+    tot.getRange(13, 2, EXPENSE_CATEGORIES.length, 1).setNumberFormat("$#,##0.00");
+    tot.getRange("A8:B8").setFontWeight("bold").setFontSize(13).setBackground("#eaf3f9");
+    tot.getRange("A12").setFontWeight("bold");
+    tot.getRange("C3").setValue("Change these dates each season").setFontColor("#557085");
+  }
+  ss.setActiveSheet(tot);
+}
+
+function formatPaidColumns_(sheet) {
+  sheet.getRange("N2:N").setNumberFormat("$#,##0.00");
+  sheet.getRange("O2:O").setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(["Cash", "Venmo", "Zelle", "Other"], true).build());
 }
 
 function savePhotos_(photos, name) {
