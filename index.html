@@ -282,9 +282,9 @@ html { scroll-behavior: smooth; }
           <div class="field"><label for="b-phone">Phone</label><input id="b-phone" type="tel" autocomplete="tel" required></div>
         </div>
         <div class="row2">
-          <div class="field"><label for="b-date">Preferred day</label><input id="b-date" type="date" required></div>
+          <div class="field"><label for="b-date">Preferred day</label><select id="b-date" required></select></div>
           <div class="field"><label for="b-time">Time window</label>
-            <select id="b-time"><option>Morning (8–11)</option><option>Midday (11–2)</option><option selected>Afternoon (2–5)</option><option>Evening (5–8)</option></select>
+            <select id="b-time"></select>
           </div>
         </div>
         <div class="field"><label for="b-how">Drop-off or pickup?</label>
@@ -425,9 +425,29 @@ html { scroll-behavior: smooth; }
   function syncAddr() { $("addr-field").hidden = $("b-how").value !== "pickup"; }
   $("b-how").addEventListener("change", function () { $("pickup").checked = $("b-how").value === "pickup"; syncAddr(); renderTicket(); });
 
-  // Default the booking date to tomorrow.
-  var d = new Date(); d.setDate(d.getDate() + 1);
-  $("b-date").value = d.toISOString().slice(0, 10);
+  // Jamo's weekly hours. Days not listed are closed. Edit here to change what customers can pick.
+  var WINDOWS = ["Morning (8–11)", "Midday (11–2)", "Afternoon (2–5)", "Evening (5–8)"];
+  var HOURS = { 0: WINDOWS, 2: [WINDOWS[0]], 3: WINDOWS, 4: WINDOWS, 6: WINDOWS };
+  var DAYS_AHEAD = 21;
+
+  function fillDays() {
+    var opts = [], d = new Date();
+    for (var i = 1; i <= DAYS_AHEAD; i++) {
+      d.setDate(d.getDate() + 1);
+      if (!HOURS[d.getDay()]) continue;
+      var label = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      opts.push('<option value="' + label + '" data-dow="' + d.getDay() + '">' + label + "</option>");
+    }
+    $("b-date").innerHTML = opts.join("");
+    fillTimes();
+  }
+  function fillTimes() {
+    var opt = $("b-date").selectedOptions[0];
+    var list = opt ? HOURS[opt.dataset.dow] : [];
+    $("b-time").innerHTML = list.map(function (w) { return "<option>" + w + "</option>"; }).join("");
+  }
+  $("b-date").addEventListener("change", fillTimes);
+  fillDays();
 
   function orderText() {
     var t = totals();
