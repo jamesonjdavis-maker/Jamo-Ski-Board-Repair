@@ -310,12 +310,14 @@ html { scroll-behavior: smooth; }
           <select id="b-how"><option value="drop">I'll drop it off</option><option value="pickup">Pick it up from me ($15)</option></select>
         </div>
         <div class="field" id="addr-field" hidden><label for="b-addr">Pickup address in Boulder</label><input id="b-addr" autocomplete="street-address"></div>
+        <div class="field"><label for="b-ref">Referral code <span class="fine">(optional)</span></label><input id="b-ref" autocomplete="off" autocapitalize="characters" placeholder="Got a code from a friend? Enter it here."></div>
         <div class="field"><label for="b-notes">Anything else?</label><textarea id="b-notes" placeholder="Need them back by Friday for a trip."></textarea></div>
         <input type="text" class="hp" id="b-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
         <button class="btn btn-ink" type="submit" id="book-send">Send booking request</button>
         <div class="result" id="book-done" hidden>
           <strong>Got it, thanks!</strong>
           <p>Your request is in. I'll text you soon to confirm your time.</p>
+          <p id="my-code" hidden>Your referral code is <strong id="my-code-val"></strong>. Share it with friends and get $5 back every time someone new books with it.</p>
         </div>
         <div class="result" id="book-result" hidden>
           <strong>Here's your request.</strong>
@@ -344,6 +346,7 @@ html { scroll-behavior: smooth; }
       <details class="card"><summary>What's P-Tex and epoxy repair?</summary><p>P-Tex fills scratches and gouges in the base so it glides and doesn't soak up water. Epoxy repairs cracks and chips in the top layer so water can't get into the core.</p></details>
       <details class="card"><summary>How does the Season Service work?</summary><p>One payment of $100 covers every service, as many times as you need, on that pair of skis or snowboard for the whole season.</p></details>
       <details class="card"><summary>How do I pay?</summary><p>Cash, Venmo or Zelle when you get your gear back. Card payments are coming soon.</p></details>
+      <details class="card"><summary>Do you have a referral program?</summary><p>Yes. Every booking gets you your own referral code. When a friend books for the first time with your code, you get $5 back.</p></details>
     </div>
   </section>
 </main>
@@ -477,7 +480,7 @@ html { scroll-behavior: smooth; }
   function send(payload) {
     return fetch(INBOX_URL, { method: "POST", body: JSON.stringify(payload) })
       .then(function (r) { return r.json(); })
-      .then(function (res) { if (!res.ok) throw new Error(res.error || "Request failed"); });
+      .then(function (res) { if (!res.ok) throw new Error(res.error || "Request failed"); return res; });
   }
 
   function busy(btn, on, label) { btn.disabled = on; btn.textContent = label; }
@@ -490,6 +493,7 @@ html { scroll-behavior: smooth; }
       "\n" + ($("b-how").value === "pickup" ? "Pickup at: " + ($("b-addr").value || "(address)") : "I'll drop it off") +
       "\n\nOrder:\n" + orderText() +
       "\nEstimated total: " + money(t.total) +
+      ($("b-ref").value ? "\nReferral code: " + $("b-ref").value : "") +
       ($("b-notes").value ? "\n\nNotes: " + $("b-notes").value : "");
     $("book-text").textContent = txt;
     $("sms-book").href = "sms:" + PHONE + "?&body=" + encodeURIComponent(txt);
@@ -507,8 +511,10 @@ html { scroll-behavior: smooth; }
       name: $("b-name").value, phone: $("b-phone").value,
       day: $("b-date").value, time: $("b-time").value,
       method: $("b-how").value === "pickup" ? "Pickup" : "Drop-off", address: $("b-addr").value,
-      order: orderText(), total: money(totals().total), notes: $("b-notes").value
-    }).then(function () {
+      order: orderText(), total: money(totals().total), notes: $("b-notes").value,
+      referral: $("b-ref").value
+    }).then(function (res) {
+      $("my-code").hidden = !res.code; $("my-code-val").textContent = res.code || "";
       $("book-done").hidden = false; busy(btn, false, "Send booking request");
     }, function () {
       // If sending fails, give them the text version so the request isn't lost.

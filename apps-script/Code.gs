@@ -5,7 +5,8 @@
 
 var SHEET_NAME = "Requests";
 var FOLDER_NAME = "Jamo's Repair Photos";
-var HEADERS = ["Received", "Type", "Name", "Phone", "Day", "Time", "Drop-off / Pickup", "Pickup address", "Order", "Estimated total", "Notes", "Photos", "Status", "Amount paid ($)", "Paid with", "Auto-texted"];
+var HEADERS = ["Received", "Type", "Name", "Phone", "Day", "Time", "Drop-off / Pickup", "Pickup address", "Order", "Estimated total", "Notes", "Photos", "Status", "Amount paid ($)", "Paid with", "Auto-texted", "Referral code used", "Referred by", "Their referral code"];
+var REFERRAL_REWARD = 5;
 var EXPENSE_CATEGORIES = ["Wax", "P-Tex & epoxy", "Tools", "Gas & driving", "Supplies", "Website & ads", "Other"];
 
 function doPost(e) {
@@ -16,24 +17,33 @@ function doPost(e) {
 
     var photoLinks = savePhotos_(data.photos || [], data.name);
     var sheet = getSheet_();
-    sheet.appendRow(cells_([
-      new Date(),
-      data.type === "photos" ? "Photo check" : "Booking",
-      clean_(data.name),
-      clean_(data.phone),
-      clean_(data.day),
-      clean_(data.time),
-      clean_(data.method),
-      clean_(data.address),
-      clean_(data.order),
-      clean_(data.total),
-      clean_(data.notes),
-      photoLinks.join("\n"),
-      "New"
-    ]));
+    var lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+      var ref = { used: "", by: "", code: "" };
+      if (data.type !== "photos") ref = handleReferral_(sheet, data);
+      sheet.appendRow(cells_([
+        new Date(),
+        data.type === "photos" ? "Photo check" : "Booking",
+        clean_(data.name),
+        clean_(data.phone),
+        clean_(data.day),
+        clean_(data.time),
+        clean_(data.method),
+        clean_(data.address),
+        clean_(data.order),
+        clean_(data.total),
+        clean_(data.notes),
+        photoLinks.join("\n"),
+        "New", "", "", "",
+        ref.used, ref.by, ref.code
+      ]));
+    } finally {
+      lock.releaseLock();
+    }
 
-    sendAlert_(data, photoLinks, sheet);
-    return reply_({ ok: true });
+    sendAlert_(data, photoLinks, sheet, ref);
+    return reply_({ ok: true, code: ref.code });
   } catch (err) {
     return reply_({ ok: false, error: String(err) });
   }
@@ -53,7 +63,7 @@ function doGet(e) {
     var sheet = getSheet_();
     var last = sheet.getLastRow();
     if (last < 2) return reply_({ ok: true });
-    var rows = sheet.getRange(2, 1, last - 1, 16).getValues();
+    var rows = sheet.getRange(2, 1, last - 1, 19).getValues();
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
       if (r[1] === "Booking" && r[3] && !r[15]) {
@@ -61,7 +71,8 @@ function doGet(e) {
         var first = String(r[2]).split(" ")[0];
         var msg = "Hi " + first + "! It's Jamo from Jamo's Ski & Snowboard Repair. Got your booking request for " +
           asDay_(r[4]) + ", " + r[5] + ":\n" + r[8] + "\nEstimated total: " + (typeof r[9] === "number" ? "$" + r[9] : r[9]) +
-          "\nI'll text you soon to confirm your time.";
+          "\nI'll text you soon to confirm your time." +
+          (r[18] ? "\n\nYour referral code is " + r[18] + ". Share it with friends and you get $" + REFERRAL_REWARD + " back every time someone new books with it!" : "");
         return reply_({ ok: true, name: first, phone: String(r[3]), message: msg });
       }
     }
@@ -69,6 +80,73 @@ function doGet(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+// Gives every booking customer a code (repeat customers keep the same one), and if they
+// typed a friend's code, logs a $5 reward for that friend on the Referrals tab.
+function handleReferral_(sheet, data) {
+  addReferralHeaders_(sheet);
+  var phone = digits_(data.phone);
+  var last = sheet.getLastRow();
+  var rows = last >= 2 ? sheet.getRange(2, 1, last - 1, 19).getValues() : [];
+  var codes = {}, mine = "";
+  rows.forEach(function (r) {
+    if (!r[18]) return;
+    codes[String(r[18]).toUpperCase()] = { name: r[2], phone: digits_(r[3]) };
+    if (phone && digits_(r[3]) === phone) mine = String(r[18]);
+  });
+
+  if (!mine) {
+    var base = String(data.name || "").split(" ")[0].toUpperCase().replace(/[^A-Z]/g, "").slice(0, 6) || "JAMO";
+    do { mine = base + Math.floor(100 + Math.random() * 900); } while (codes[mine]);
+  }
+
+  var used = String(data.referral || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  var by = "";
+  if (used) {
+    var owner = codes[used];
+    if (!owner) by = "Code not found";
+    else if (owner.phone === phone) by = "Their own code (no reward)";
+    else if (alreadyReferred_(phone)) by = owner.name + " (no reward, already used a code before)";
+    else {
+      by = owner.name;
+      getReferrals_().appendRow(cells_([new Date(), used, clean_(owner.name), owner.phone, clean_(data.name), clean_(data.phone), REFERRAL_REWARD, false]));
+      var ref = getReferrals_();
+      ref.getRange(ref.getLastRow(), 8).insertCheckboxes();
+    }
+  }
+  return { used: used, by: by, code: mine };
+}
+
+function addReferralHeaders_(sheet) {
+  if (sheet.getRange(1, 17).getValue()) return;
+  sheet.getRange(1, 17, 1, 3).setValues([HEADERS.slice(16)]).setFontWeight("bold").setBackground("#12293b").setFontColor("#ffffff");
+  sheet.setColumnWidths(17, 3, 150);
+}
+
+// One new customer can only earn a reward for a friend once.
+function alreadyReferred_(phone) {
+  var ref = getReferrals_();
+  if (ref.getLastRow() < 2) return false;
+  return ref.getRange(2, 6, ref.getLastRow() - 1, 1).getValues().some(function (v) { return digits_(v[0]) === phone; });
+}
+
+function getReferrals_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ref = ss.getSheetByName("Referrals");
+  if (!ref) {
+    ref = ss.insertSheet("Referrals");
+    ref.appendRow(["Date", "Code", "Gets $5 back", "Their phone", "New customer", "New customer phone", "Reward ($)", "Paid back?"]);
+    ref.setFrozenRows(1);
+    ref.getRange(1, 1, 1, 8).setFontWeight("bold").setBackground("#12293b").setFontColor("#ffffff");
+    ref.setColumnWidths(1, 8, 150);
+    ref.getRange("G2:G").setNumberFormat("$#,##0.00");
+  }
+  return ref;
+}
+
+function digits_(v) {
+  return String(v == null ? "" : v).replace(/\D/g, "").slice(-10);
 }
 
 // Sheets can turn "Thu, Oct 22" into a date; turn it back into words for the text.
@@ -197,7 +275,7 @@ function savePhotos_(photos, name) {
   });
 }
 
-function sendAlert_(data, photoLinks, sheet) {
+function sendAlert_(data, photoLinks, sheet, ref) {
   var kind = data.type === "photos" ? "Photo check" : "Booking";
   // Subject starts with the phone number so a phone automation can read it.
   var subject = clean_(data.phone) + " | New " + kind + " from " + clean_(data.name);
@@ -211,6 +289,8 @@ function sendAlert_(data, photoLinks, sheet) {
   if (data.method) lines.push("Drop-off / Pickup: " + clean_(data.method) + (data.address ? " at " + clean_(data.address) : ""));
   if (data.order) lines.push("", "Order:", clean_(data.order), "Estimated total: " + clean_(data.total));
   if (data.notes) lines.push("", "Notes: " + clean_(data.notes));
+  if (ref && ref.used) lines.push("", "Referral code used: " + ref.used + " (" + ref.by + ")");
+  if (ref && ref.code) lines.push("Their own referral code: " + ref.code);
   if (photoLinks.length) lines.push("", "Photos:", photoLinks.join("\n"));
   lines.push("", "All requests: " + sheet.getParent().getUrl());
   MailApp.sendEmail(Session.getEffectiveUser().getEmail(), subject, lines.join("\n"));
