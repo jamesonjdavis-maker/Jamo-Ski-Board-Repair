@@ -60,7 +60,7 @@ function doGet(e) {
         sheet.getRange(i + 2, 16).setValue(new Date());
         var first = String(r[2]).split(" ")[0];
         var msg = "Hi " + first + "! It's Jamo from Jamo's Ski & Snowboard Repair. Got your booking request for " +
-          r[4] + ", " + r[5] + ":\n" + r[8] + "\nEstimated total: " + r[9] +
+          asDay_(r[4]) + ", " + r[5] + ":\n" + r[8] + "\nEstimated total: " + (typeof r[9] === "number" ? "$" + r[9] : r[9]) +
           "\nI'll text you soon to confirm your time.";
         return reply_({ ok: true, name: first, phone: String(r[3]), message: msg });
       }
@@ -69,6 +69,11 @@ function doGet(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+// Sheets can turn "Thu, Oct 22" into a date; turn it back into words for the text.
+function asDay_(v) {
+  return v instanceof Date ? Utilities.formatDate(v, Session.getScriptTimeZone(), "EEE, MMM d") : String(v);
 }
 
 function getSheet_() {
