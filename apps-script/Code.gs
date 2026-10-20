@@ -58,7 +58,11 @@ function doGet(e) {
       var r = rows[i];
       if (r[1] === "Booking" && r[3] && !r[15]) {
         sheet.getRange(i + 2, 16).setValue(new Date());
-        return reply_({ ok: true, name: String(r[2]).split(" ")[0], phone: String(r[3]) });
+        var first = String(r[2]).split(" ")[0];
+        var msg = "Hi " + first + "! It's Jamo from Jamo's Ski & Snowboard Repair. Got your booking request for " +
+          r[4] + ", " + r[5] + ":\n" + r[8] + "\nEstimated total: " + r[9] +
+          "\nI'll text you soon to confirm your time.";
+        return reply_({ ok: true, name: first, phone: String(r[3]), message: msg });
       }
     }
     return reply_({ ok: true });
