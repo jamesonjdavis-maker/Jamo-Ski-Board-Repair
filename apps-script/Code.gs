@@ -43,6 +43,7 @@ function doPost(e) {
     }
 
     sendAlert_(data, photoLinks, sheet, ref);
+    pushAlert_(data);
     return reply_({ ok: true, code: ref.code });
   } catch (err) {
     return reply_({ ok: false, error: String(err) });
@@ -175,6 +176,7 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu("Jamo's")
     .addItem("Set up money tracking", "setupMoneyTracking")
     .addItem("Set up auto-text", "setupAutoText")
+    .addItem("Set up phone alerts", "setupPhoneAlerts")
     .addToUi();
 }
 
@@ -256,6 +258,36 @@ function setupAutoText() {
   set.getRange("A1").setFontWeight("bold");
   set.setColumnWidth(1, 700);
   ss.setActiveSheet(set);
+}
+
+// Run once. Makes a private alert channel for the free ntfy phone app and puts its name
+// on the Settings tab. The name stays in Script Properties, never in the website code.
+function setupPhoneAlerts() {
+  var props = PropertiesService.getScriptProperties();
+  var topic = props.getProperty("NTFY_TOPIC");
+  if (!topic) { topic = "jamo-" + Utilities.getUuid().replace(/-/g, "").slice(0, 20); props.setProperty("NTFY_TOPIC", topic); }
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var set = ss.getSheetByName("Settings") || ss.insertSheet("Settings");
+  set.getRange("A5:A6").setValues([["Phone alert topic for the ntfy app (keep this private)"], [topic]]);
+  set.getRange("A5").setFontWeight("bold");
+  UrlFetchApp.fetch("https://ntfy.sh/" + topic, { method: "post", payload: "Phone alerts are set up.", headers: { Title: "Jamo's test alert" }, muteHttpExceptions: true });
+  ss.setActiveSheet(set);
+}
+
+// Instant phone alert through ntfy. A failed alert never stops the request from saving.
+function pushAlert_(data) {
+  var topic = PropertiesService.getScriptProperties().getProperty("NTFY_TOPIC");
+  if (!topic) return;
+  try {
+    var booking = data.type !== "photos";
+    var body = clean_(data.name) + (booking ? " booked " + clean_(data.day) + ", " + clean_(data.time) + " (" + clean_(data.total) + ")" : " sent photos for a quote");
+    UrlFetchApp.fetch("https://ntfy.sh/" + topic, {
+      method: "post",
+      payload: body,
+      headers: { Title: booking ? "New booking" : "New photo check", Tags: "ski" },
+      muteHttpExceptions: true
+    });
+  } catch (err) {}
 }
 
 function formatPaidColumns_(sheet) {
