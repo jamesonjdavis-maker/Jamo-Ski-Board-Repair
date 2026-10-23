@@ -324,7 +324,7 @@ function pushAlert_(data) {
 
 function formatPaidColumns_(sheet) {
   sheet.getRange("N2:N").setNumberFormat("$#,##0.00");
-  sheet.getRange("O2:O").setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(["Cash", "Venmo", "Zelle", "Other"], true).build());
+  sheet.getRange("O2:O").setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(["Cash", "Venmo", "PayPal", "Apple Pay", "Other"], true).build());
 }
 
 function savePhotos_(photos, name) {
