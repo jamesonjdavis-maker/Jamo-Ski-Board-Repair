@@ -1,6 +1,7 @@
 // Jamo's sky: turns a time of day into the colors of the sky, the sun or moon, and the light on the mountains.
-// Time runs from 0 to 1: 0 is midnight, .25 sunrise, .5 noon, .75 sunset. This file loads in the page head,
-// so a visitor's saved time shows before the page paints. site.js connects the drag slider in the header.
+// Time runs from 0 to 1: 0 is midnight, .25 sunrise, .5 noon, .75 sunset. Each visit starts at the visitor's own time of day,
+// using Boulder's sunrise and sunset for today. A time they drag to is kept for the rest of that visit, across pages.
+// This file loads in the page head so the sky is right before the page paints. site.js connects the drag slider in the header.
 (function () {
   // Colors at night, sunrise, noon and sunset. Pairs are [lit side, shade side]; sky is five stops from top to horizon.
   var KEYS = [
@@ -22,7 +23,6 @@
       td: ["#ec7f3c", "#984926"], te: "#f3cfae", trunk: "#4a352b", floor: "#2b3a33", shade: "#e3d3cc" }
   ];
   var PAIRS = ["far", "farcap", "mid", "midcap", "rock", "ta", "tb", "tc", "td"];
-  var NAMED = { night: 0, sunrise: .3, day: .5, sunset: .7 };
   var SUN_ICON = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='13' fill='%23ffc94d'/%3E%3Ccircle cx='13' cy='13' r='7' fill='%23fff3cf'/%3E%3C/svg%3E\")";
   var MOON_ICON = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='13' fill='%23182838'/%3E%3Cpath d='M18 17.5A7.5 7.5 0 0 1 9.5 7a7.5 7.5 0 1 0 8.5 10.5z' fill='%23e8eef2'/%3E%3C/svg%3E\")";
 
@@ -44,9 +44,9 @@
     return mix(c, to, hi);
   };
   var pct = function (v) { return (v * 100).toFixed(2) + "%"; };
-  var root = document.documentElement, now = .5, night = null;
+  var root = document.documentElement, now = .5, night = null, picked = false;
 
-  function name(t) { return t < .2 || t > .8 ? "Night" : t < .36 ? "Sunrise" : t < .64 ? "Day" : "Sunset"; }
+  function name(t) { return t < .15 || t > .85 ? "Night" : t < .36 ? "Sunrise" : t < .64 ? "Day" : "Sunset"; }
 
   function set(t, save) {
     now = t = Math.min(1, Math.max(0, t));
@@ -97,15 +97,36 @@
       if (isNight) root.dataset.time = "night"; else delete root.dataset.time;
       if (document.body) document.dispatchEvent(new Event("jamo-time"));
     }
-    if (save) try { localStorage.setItem("jamo-sky", String(t)); } catch (e) {}
+    if (save) { picked = true; try { sessionStorage.setItem("jamo-sky", String(t)); } catch (e) {} }
   }
 
-  var start = .5;
+  // The time of day right now on the visitor's clock, placed so Boulder's sunrise lands on .25 and sunset on .75.
+  // Dawn and dusk last about an hour and a quarter, the glow around sunrise and sunset about an hour and a half; night and midday hold steady.
+  function clock(d) {
+    d = d || new Date();
+    var rad = Math.PI / 180, lat = 40.015 * rad, n = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 864e5);
+    var dec = 23.44 * rad * Math.sin(2 * Math.PI * (284 + n) / 365);
+    var day = 2 / 15 / rad * Math.acos((Math.sin(-.833 * rad) - Math.sin(lat) * Math.sin(dec)) / (Math.cos(lat) * Math.cos(dec)));
+    var b = 2 * Math.PI * (n - 81) / 364, late = (9.87 * Math.sin(2 * b) - 7.53 * Math.cos(b) - 1.5 * Math.sin(b)) / 60;
+    // Solar noon in Boulder is near 12:00 on standard time, an hour later on daylight time, nudged by the time of year.
+    var jan = new Date(d.getFullYear(), 0, 1).getTimezoneOffset(), jul = new Date(d.getFullYear(), 6, 1).getTimezoneOffset();
+    var noon = 12 + .018 - late + (d.getTimezoneOffset() < Math.max(jan, jul) ? 1 : 0);
+    var rise = noon - day / 2, set = noon + day / 2, h = d.getHours() + d.getMinutes() / 60, T = 1.25, D = 1.5;
+    if (h < rise - T) h += 24;
+    var marks = [[rise - T, .05], [rise, .25], [rise + D, .4], [set - D, .6], [set, .75], [set + T, .95], [rise - T + 24, 1.05]];
+    for (var i = 1; i < marks.length; i++) {
+      var a = marks[i - 1], b = marks[i];
+      if (h <= b[0]) return (a[1] + (b[1] - a[1]) * (h - a[0]) / (b[0] - a[0])) % 1;
+    }
+    return .05;
+  }
+
+  var start = clock();
   try {
-    var saved = localStorage.getItem("jamo-sky"), old = localStorage.getItem("jamo-time");
-    if (saved !== null && !isNaN(parseFloat(saved))) start = parseFloat(saved);
-    else if (old in NAMED) start = NAMED[old];
+    localStorage.removeItem("jamo-sky"); localStorage.removeItem("jamo-time"); // picks saved by earlier versions of the site
+    var saved = sessionStorage.getItem("jamo-sky");
+    if (saved !== null && !isNaN(parseFloat(saved))) { start = parseFloat(saved); picked = true; }
   } catch (e) {}
   set(start);
-  window.JamoSky = { set: set, get: function () { return now; }, name: name };
+  window.JamoSky = { set: set, get: function () { return now; }, name: name, clock: clock, picked: function () { return picked; } };
 })();
