@@ -8,7 +8,7 @@ var FOLDER_NAME = "Jamo's Repair Photos";
 var HEADERS = ["Received", "Type", "Name", "Phone", "Day", "Time", "Drop-off / Pickup", "Pickup address", "Order", "Estimated total", "Notes", "Photos", "Status", "Amount paid ($)", "Paid with", "Auto-texted", "Referral code used", "Referred by", "Their referral code", "Referral discount ($)"];
 var REFERRAL_REWARD = 5;
 var REFERRAL_DISCOUNT = 0.15;
-// Influencer codes: anyone can use one once for this much off. Keep in sync with PROMOS on the website.
+// Influencer codes: anyone can use one once for this much off, and the influencer earns the $5 reward. Keep in sync with PROMOS on the website.
 var PROMO_CODES = { VILL: 0.20, PEAKED: 0.20 };
 var EXPENSE_CATEGORIES = ["Wax", "P-Tex & epoxy", "Tools", "Gas & driving", "Supplies", "Website & ads", "Other"];
 
@@ -119,7 +119,13 @@ function handleReferral_(sheet, data) {
   if (used && PROMO_CODES[used]) {
     rate = PROMO_CODES[used];
     if (usedPromoBefore_(rows, used, phone)) { by = "Influencer " + used + " (already used)"; note = "The " + used + " code can be used once per customer."; }
-    else { by = "Influencer " + used; eligible = true; }
+    else {
+      by = "Influencer " + used; eligible = true;
+      // Influencers earn the same $5 per new customer, tracked on the Referrals tab.
+      var promoRef = getReferrals_();
+      promoRef.appendRow(cells_([new Date(), used, "Influencer " + used, "", clean_(data.name), clean_(data.phone), REFERRAL_REWARD, false]));
+      promoRef.getRange(promoRef.getLastRow(), 8).insertCheckboxes();
+    }
   } else if (used) {
     var owner = codes[used];
     if (!owner) { by = "Code not found"; note = "We couldn't find that referral code, so no discount was applied."; }
