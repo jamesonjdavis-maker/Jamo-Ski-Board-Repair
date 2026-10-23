@@ -154,8 +154,8 @@ a:hover > .arrow, button:hover > .arrow, a:hover .arrow { transform: translateX(
 .hours dt { font-weight: 500; }
 .hours dd { color: var(--on-block-muted); text-align: right; }
 .hours .closed dd { font-weight: 500; color: var(--on-block); }
-.panel-note { display: inline-flex; align-items: center; gap: .5rem; align-self: flex-start; font-size: var(--t-sm); font-weight: 600; color: var(--on-block); text-decoration: none; padding: .55rem .9rem; border: 1px solid var(--block-line); border-radius: 999px; transition: background-color .3s var(--ease), border-color .3s var(--ease); }
-.panel-note:hover { background: rgba(238, 241, 242, .08); border-color: rgba(238, 241, 242, .4); }
+.panel-note { display: flex; align-items: center; gap: .6rem; font-size: var(--t-sm); font-weight: 600; color: var(--on-block); }
+.panel-note::before { content: ""; flex: none; width: .45rem; height: .45rem; border-radius: 50%; background: var(--accent); }
 .panel-foot { font-size: var(--t-sm); color: var(--on-block-muted); margin-top: auto; padding-bottom: 2.5rem; }
 .panel-foot strong { color: var(--on-block); font-weight: 500; }
 .facts ul { border-block: 1px solid var(--line); }
@@ -314,6 +314,39 @@ input[type="checkbox"]:checked { background-color: var(--ink); border-color: var
 .side { display: grid; gap: 2.25rem; position: sticky; top: 1.5rem; }
 .side .ticket { position: static; }
 
+/* Snow page: a card per resort with today's weather, the snow on the way and links to the resort's own report. */
+#resorts-section { padding-top: clamp(2.5rem, 5vw, 4rem); }
+.snow-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem 2rem; margin-bottom: 1.75rem; }
+.sort { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.sort .fine { margin-right: .25rem; }
+.sort .chip { border: 1px solid var(--line-strong); }
+.resorts { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); gap: 1rem; }
+.resort { position: relative; display: flex; flex-direction: column; gap: 1.1rem; padding: 1.4rem 1.4rem 1.25rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); transition: border-color .3s var(--ease), box-shadow .4s var(--ease); }
+.resort:hover { border-color: var(--line-strong); box-shadow: var(--soft); }
+.resort[data-powder]::before { content: "Snow on the way"; position: absolute; top: -.7rem; right: 1rem; font: 500 var(--t-xs)/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; padding: .4rem .65rem; border-radius: 999px; background: var(--alpine-block); color: #fff; }
+.resort-head { display: grid; gap: .1rem; }
+.resort-head h3 { font: 600 var(--t-2)/1.1 var(--display); letter-spacing: -.01em; }
+.wx-now { display: flex; align-items: flex-start; gap: .9rem; min-height: 3.6rem; }
+.wx { flex: none; width: 2.4rem; height: 2.4rem; fill: none; stroke: var(--alpine); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.wx[data-wx="sun"], .wx[data-wx="partly"] { stroke: var(--glow); }
+.wx[data-wx="snow"] { stroke: var(--wax-cold); }
+.temp { display: flex; align-items: baseline; gap: .5rem; color: var(--muted); font-size: var(--t-sm); }
+.temp strong { font: 600 var(--t-3)/1 var(--display); color: var(--ink); font-variant-numeric: lining-nums tabular-nums; }
+.wx-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+.wx-stats div { padding: .75rem 0 .1rem; display: grid; gap: .15rem; }
+.wx-stats div:nth-child(odd) { padding-right: .75rem; }
+.wx-stats div:nth-child(n+3) { border-top: 1px solid var(--line); margin-top: .65rem; }
+.wx-stats dt { font: 500 var(--t-xs)/1.3 var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.wx-stats dd { margin: 0; font-weight: 500; font-variant-numeric: tabular-nums; }
+.wx-stats a { text-underline-offset: 3px; }
+.resort-links { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.25rem; margin-top: auto; }
+.wx-error { padding: .9rem 1rem; border-radius: 4px; background: var(--glacier); }
+.skel { display: block; height: .9rem; width: 70%; border-radius: 4px; background: var(--glacier); }
+.skel.short { width: 45%; margin-top: .6rem; }
+.wx-now:has(.skel) { flex-direction: column; gap: 0; }
+.snow-source { margin-top: 1.5rem; max-width: 46rem; }
+.snow-cta .head-row { margin-bottom: 1.75rem; }
+
 /* Footer */
 footer { background: var(--block); color: var(--on-block); }
 .foot { display: grid; grid-template-columns: minmax(0, 6fr) repeat(3, minmax(0, 2fr)); gap: 2.5rem; padding-block: clamp(3.5rem, 7vw, 5.5rem) 2.5rem; }
@@ -401,6 +434,8 @@ body:has(.scene) .site-header { background: var(--sky-top); border-bottom-color:
   .gear.flash { border-color: var(--ink); animation: ring 1s var(--ease) 2; }
   .js-motion .reveal { opacity: 0; transform: translateY(18px); transition: opacity .9s var(--ease), transform .9s var(--ease); }
   .js-motion .reveal.in { opacity: 1; transform: none; }
+  @keyframes shimmer { 50% { opacity: .45; } }
+  .resort.loading .skel { animation: shimmer 1.4s ease-in-out infinite; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
 @media (max-width: 640px) {

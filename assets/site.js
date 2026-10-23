@@ -403,8 +403,146 @@
   }
 })();
 
-// Time of day: drag the sun along the slider in the header and the sky, sun and mountain light follow (assets/sky.js does the coloring).
-// Each visitor's time is remembered once they let go.
+// Snow page: today's weather and the snow forecast for Colorado resorts from the National Weather Service (free, no key).
+// Each resort takes two requests: its forecast grid (kept for a month) and the forecast (kept for half an hour).
+(function () {
+  var list = document.getElementById("resorts"); if (!list) return;
+  var R = [
+    ["eldora", "Eldora", "Nederland", 39.9375, -105.5828, "https://www.eldora.com/", "https://www.eldora.com/the-mountain/current-conditions/snow-report-weather/"],
+    ["winterpark", "Winter Park", "Grand County", 39.8869, -105.7625, "https://www.winterparkresort.com/", "https://www.winterparkresort.com/the-mountain"],
+    ["loveland", "Loveland", "Clear Creek County", 39.68, -105.8979, "https://skiloveland.com/", "https://skiloveland.com/trail-lift-report/"],
+    ["abasin", "Arapahoe Basin", "Summit County", 39.6423, -105.8718, "https://www.arapahoebasin.com/", "https://www.arapahoebasin.com/snow-report/"],
+    ["keystone", "Keystone", "Summit County", 39.6045, -105.954, "https://www.keystoneresort.com/", "https://www.keystoneresort.com/the-mountain/mountain-conditions/terrain-and-lift-status.aspx"],
+    ["copper", "Copper Mountain", "Summit County", 39.5016, -106.1516, "https://www.coppercolorado.com/", "https://www.coppercolorado.com/the-mountain/trail-lift-info/winter-trail-report/"],
+    ["breck", "Breckenridge", "Summit County", 39.48, -106.0667, "https://www.breckenridge.com/", "https://www.breckenridge.com/the-mountain/mountain-conditions/terrain-and-lift-status.aspx"],
+    ["vail", "Vail", "Vail Valley", 39.6061, -106.355, "https://www.vail.com/", "https://www.vail.com/the-mountain/mountain-conditions/terrain-and-lift-status.aspx"],
+    ["beaver", "Beaver Creek", "Vail Valley", 39.6042, -106.5165, "https://www.beavercreek.com/", "https://www.beavercreek.com/the-mountain/mountain-conditions/terrain-and-lift-status.aspx"],
+    ["steamboat", "Steamboat", "Routt County", 40.4572, -106.8045, "https://www.steamboat.com/", "https://www.steamboat.com/the-mountain/mountain-report"],
+    ["monarch", "Monarch", "Chaffee County", 38.5122, -106.332, "https://skimonarch.com/", ""],
+    ["aspen", "Aspen Snowmass", "Roaring Fork Valley", 39.2084, -106.949, "https://www.aspensnowmass.com/", "https://www.aspensnowmass.com/four-mountains/snow-report"],
+    ["cb", "Crested Butte", "Gunnison County", 38.8991, -106.9658, "https://www.skicb.com/", "https://www.skicb.com/the-mountain/mountain-conditions/terrain-and-lift-status.aspx"],
+    ["wolfcreek", "Wolf Creek", "San Juan Mountains", 37.4747, -106.793, "https://wolfcreekski.com/", ""],
+    ["telluride", "Telluride", "San Juan Mountains", 37.9375, -107.8123, "https://tellurideskiresort.com/", "https://tellurideskiresort.com/snow-report-pdf/"],
+    ["purgatory", "Purgatory", "San Juan Mountains", 37.6303, -107.814, "https://www.purgatory.ski/", ""]
+  ].map(function (r, i) {
+    // Straight-line distance from Boulder, only used to order the list.
+    var dy = r[3] - 40.015, dx = (r[4] + 105.2705) * Math.cos(40 * Math.PI / 180);
+    return { id: r[0], name: r[1], area: r[2], lat: r[3], lon: r[4], site: r[5], report: r[6] || r[5], near: Math.sqrt(dx * dx + dy * dy), order: i };
+  });
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  var store = {
+    get: function (k, maxAge) { try { var v = JSON.parse(localStorage.getItem(k)); return v && Date.now() - v.t < maxAge ? v.d : null; } catch (e) { return null; } },
+    put: function (k, d) { try { localStorage.setItem(k, JSON.stringify({ t: Date.now(), d: d })); } catch (e) {} }
+  };
+  var getJSON = function (url) {
+    var once = function () { return fetch(url, { headers: { Accept: "application/geo+json" } }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); };
+    // The weather service sometimes fails a request for a moment, so each one gets a second try.
+    return once().catch(function () { return new Promise(function (ok) { setTimeout(ok, 1500); }).then(once); });
+  };
+
+  // "New snow accumulation of 1 to 3 inches possible." and its variations, turned into a low and high amount in inches.
+  var snowIn = function (text) {
+    var m = /snow accumulation of ([a-z0-9. ]+?) inch/i.exec(text || "");
+    if (!m) return [0, 0];
+    var p = m[1].toLowerCase(), n = p.match(/\d+(\.\d+)?/g) || [];
+    if (/less than/.test(p)) return [0, n.length ? +n[0] : /half/.test(p) ? .5 : 1];
+    if (n.length > 1) return [+n[0], +n[1]];
+    if (n.length) return [+n[0], +n[0]];
+    return /one/.test(p) ? [1, 1] : [0, 0];
+  };
+  var total = function (periods) {
+    return periods.reduce(function (s, p) { var a = snowIn(p.detailedForecast); return [s[0] + a[0], s[1] + a[1]]; }, [0, 0]);
+  };
+  var inches = function (s) {
+    if (!s[1]) return "None";
+    if (!s[0] && s[1] <= 1) return "Under 1 in";
+    return s[0] === s[1] ? s[1] + " in" : s[0] + "–" + s[1] + " in";
+  };
+
+  // Small weather icons drawn from the forecast words.
+  var ICONS = {
+    snow: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>',
+    rain: '<path d="M7 15a4 4 0 0 1 .5-8 5 5 0 0 1 9.5 1.5 3.3 3.3 0 0 1 0 6.5zM9 18l-1 2.5M13 18l-1 2.5M17 18l-1 2.5"/>',
+    storm: '<path d="M7 14a4 4 0 0 1 .5-8 5 5 0 0 1 9.5 1.5 3.3 3.3 0 0 1 0 6.5h-2M12 13l-2 4h3l-2 4"/>',
+    cloud: '<path d="M7 18a4.5 4.5 0 0 1 .5-9 5.5 5.5 0 0 1 10.6 1.7A3.7 3.7 0 0 1 17.5 18z"/>',
+    partly: '<path d="M9 3.5v1.5M3.5 9H5M5 5l1 1M13 5l-1 1M6.3 11.3A3.5 3.5 0 1 1 12.4 8M9 20a4 4 0 0 1 .4-8 5 5 0 0 1 9.5 1.6A3.2 3.2 0 0 1 18.5 20z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+    moon: '<path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/>',
+    wind: '<path d="M3 9h11a3 3 0 1 0-3-3M3 15h15a3 3 0 1 1-3 3M3 12h8"/>',
+    fog: '<path d="M4 9h16M6 13h12M4 17h16"/>'
+  };
+  var icon = function (p) {
+    var f = (p.shortForecast || "").toLowerCase(), k =
+      /thunder/.test(f) ? "storm" : /snow|flurr|blizzard|sleet/.test(f) ? "snow" : /rain|shower|drizzle/.test(f) ? "rain" :
+      /fog|haze|smoke/.test(f) ? "fog" : /wind|breezy|blustery/.test(f) ? "wind" : /partly|mostly sunny|mostly clear/.test(f) ? "partly" :
+      /cloud|overcast/.test(f) ? "cloud" : p.isDaytime === false ? "moon" : "sun";
+    return '<svg class="wx" viewBox="0 0 24 24" aria-hidden="true" data-wx="' + k + '">' + ICONS[k] + "</svg>";
+  };
+
+  var data = {}, sortBy = "near";
+  var card = function (r) {
+    var d = data[r.id], links =
+      '<div class="resort-links"><a class="btn btn-line btn-sm" href="' + esc(r.report) + '" target="_blank" rel="noopener">Trails &amp; lifts open</a>' +
+      '<a class="link-arrow" href="' + esc(r.site) + '" target="_blank" rel="noopener"><span>Website</span></a></div>';
+    var head = '<div class="resort-head"><h3>' + esc(r.name) + '</h3><span class="fine">' + esc(r.area) + "</span></div>";
+    if (!d) return '<li class="resort loading" data-id="' + r.id + '">' + head + '<div class="wx-now"><span class="skel"></span><span class="skel short"></span></div>' + links + "</li>";
+    if (d.error) return '<li class="resort" data-id="' + r.id + '">' + head + '<p class="fine wx-error">The weather service didn\'t answer just now. Check back in a few minutes, or open the resort\'s report.</p>' + links + "</li>";
+    var now = d.periods[0], next = d.periods[1];
+    return '<li class="resort" data-id="' + r.id + '"' + (d.snow3[1] >= 3 ? ' data-powder=""' : "") + ">" + head +
+      '<div class="wx-now">' + icon(now) + '<div><p class="temp"><strong>' + now.temperature + "°</strong> " + esc(now.name) + "</p>" +
+      '<p class="fine">' + esc(now.shortForecast) + "</p></div></div>" +
+      '<dl class="wx-stats"><div><dt>Snow, next 24 hrs</dt><dd>' + inches(d.snow1) + "</dd></div>" +
+      "<div><dt>Snow, next 3 days</dt><dd>" + inches(d.snow3) + "</dd></div>" +
+      "<div><dt>Wind</dt><dd>" + esc((now.windSpeed || "–").replace(" to ", "–")) + "</dd></div>" +
+      (next ? "<div><dt>" + esc(next.name) + "</dt><dd>" + (next.isDaytime ? "High " : "Low ") + next.temperature + "°</dd></div>" : "") + "</dl>" + links + "</li>";
+  };
+  var draw = function () {
+    var rs = R.slice().sort(sortBy === "snow"
+      ? function (a, b) { var x = data[a.id], y = data[b.id]; return ((y && y.snow3 ? y.snow3[1] : -1) - (x && x.snow3 ? x.snow3[1] : -1)) || a.near - b.near; }
+      : function (a, b) { return a.near - b.near; });
+    list.innerHTML = rs.map(card).join("");
+    var times = R.map(function (r) { return data[r.id] && data[r.id].updated; }).filter(Boolean).sort();
+    var done = R.filter(function (r) { return data[r.id]; }).length;
+    $updated.textContent = done < R.length ? "Loading the latest forecasts…" : times.length
+      ? "Forecasts updated " + new Date(times[0]).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) + " or later"
+      : "The weather service isn't answering right now. Try again in a few minutes.";
+  };
+  var $updated = document.getElementById("snow-updated");
+  Array.prototype.forEach.call(document.querySelectorAll("[data-sort]"), function (b) {
+    b.addEventListener("click", function () {
+      sortBy = b.dataset.sort;
+      Array.prototype.forEach.call(document.querySelectorAll("[data-sort]"), function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      draw();
+    });
+  });
+
+  var load = function (r) {
+    var cached = store.get("jamo-wx-" + r.id, 30 * 60e3);
+    if (cached) return Promise.resolve(cached);
+    var grid = store.get("jamo-grid-" + r.id, 30 * 864e5);
+    return (grid ? Promise.resolve(grid) : getJSON("https://api.weather.gov/points/" + r.lat + "," + r.lon).then(function (j) {
+      var u = j.properties.forecast; store.put("jamo-grid-" + r.id, u); return u;
+    })).then(getJSON).then(function (j) {
+      var ps = j.properties.periods.slice(0, 6).map(function (p) {
+        return { name: p.name, temperature: p.temperature, isDaytime: p.isDaytime, shortForecast: p.shortForecast, windSpeed: p.windSpeed, detailedForecast: p.detailedForecast };
+      });
+      var d = { periods: ps, snow1: total(ps.slice(0, 2)), snow3: total(ps), updated: j.properties.updateTime || j.properties.generatedAt };
+      store.put("jamo-wx-" + r.id, d);
+      return d;
+    });
+  };
+  draw();
+  // Four resorts at a time, so the weather service isn't asked for everything at once.
+  var queue = R.slice().sort(function (a, b) { return a.near - b.near; });
+  var worker = function () {
+    var r = queue.shift(); if (!r) return Promise.resolve();
+    return load(r).then(function (d) { data[r.id] = d; }, function () { data[r.id] = { error: true }; }).then(function () { draw(); return worker(); });
+  };
+  for (var i = 0; i < 4; i++) worker();
+})();
+
+// Time of day: the sky starts at the visitor's own time and keeps up with the clock. Dragging the sun along the slider in the header
+// moves the sky, sun and mountain light (assets/sky.js does the coloring), and that time stays for the rest of the visit.
 (function () {
   var dial = document.getElementById("sky-dial"), sky = window.JamoSky; if (!dial || !sky) return;
   var label = dial.parentNode.querySelector(".sky-name"), raf = 0;
@@ -417,6 +555,10 @@
     raf = requestAnimationFrame(function () { raf = 0; sky.set(at()); show(at()); });
   });
   dial.addEventListener("change", function () { sky.set(at(), true); show(at()); });
+  setInterval(function () {
+    if (sky.picked()) return;
+    var t = sky.clock(); sky.set(t); dial.value = Math.round(t * dial.max); show(t);
+  }, 60000);
 })();
 
 // Snow over the whole page that falls harder the faster you scroll down, and mountain layers that drift at different speeds.
