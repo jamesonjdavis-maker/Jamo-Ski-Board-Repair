@@ -8,6 +8,8 @@ var FOLDER_NAME = "Jamo's Repair Photos";
 var HEADERS = ["Received", "Type", "Name", "Phone", "Day", "Time", "Drop-off / Pickup", "Pickup address", "Order", "Estimated total", "Notes", "Photos", "Status", "Amount paid ($)", "Paid with", "Auto-texted", "Referral code used", "Referred by", "Their referral code", "Referral discount ($)"];
 var REFERRAL_REWARD = 5;
 var REFERRAL_DISCOUNT = 0.15;
+// Influencer codes: anyone can use one once for this much off. Keep in sync with PROMOS on the website.
+var PROMO_CODES = { VILL: 0.20, PEAKED: 0.20 };
 var EXPENSE_CATEGORIES = ["Wax", "P-Tex & epoxy", "Tools", "Gas & driving", "Supplies", "Website & ads", "Other"];
 
 function doPost(e) {
@@ -27,7 +29,7 @@ function doPost(e) {
         // The site shows 15% off whenever a code is typed. Only a valid friend's code keeps it.
         var full = Number(data.subtotal);
         if (isFinite(full) && full > 0) {
-          ref.discount = ref.eligible ? Math.round(full * REFERRAL_DISCOUNT * 100) / 100 : 0;
+          ref.discount = ref.eligible ? Math.round(full * ref.rate * 100) / 100 : 0;
           data.total = usd_(full - ref.discount);
         }
       }
@@ -81,7 +83,7 @@ function doGet(e) {
         var first = String(r[2]).split(" ")[0];
         var msg = "Hi " + first + "! It's Jamo from Jamo's Ski & Snowboard Repair. Got your booking request for " +
           asDay_(r[4]) + ", " + r[5] + ":\n" + r[8] + "\nEstimated total: " + (typeof r[9] === "number" ? "$" + r[9] : r[9]) +
-          (r[19] ? " (includes your 15% referral discount of " + usd_(Number(r[19])) + ")" : "") +
+          (r[19] ? " (includes your " + usd_(Number(r[19])) + " discount)" : "") +
           "\nI'll text you soon to confirm your time." +
           (r[18] ? "\n\nYour referral code is " + r[18] + ". Share it with friends and you get $" + REFERRAL_REWARD + " back every time someone new books with it!" : "");
         return reply_({ ok: true, name: first, phone: String(r[3]), message: msg });
@@ -99,7 +101,7 @@ function handleReferral_(sheet, data) {
   addReferralHeaders_(sheet);
   var phone = digits_(data.phone);
   var last = sheet.getLastRow();
-  var rows = last >= 2 ? sheet.getRange(2, 1, last - 1, 19).getValues() : [];
+  var rows = last >= 2 ? sheet.getRange(2, 1, last - 1, 20).getValues() : [];
   var codes = {}, mine = "";
   rows.forEach(function (r) {
     if (!r[18]) return;
@@ -113,8 +115,12 @@ function handleReferral_(sheet, data) {
   }
 
   var used = String(data.referral || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-  var by = "", note = "", eligible = false;
-  if (used) {
+  var by = "", note = "", eligible = false, rate = REFERRAL_DISCOUNT;
+  if (used && PROMO_CODES[used]) {
+    rate = PROMO_CODES[used];
+    if (usedPromoBefore_(rows, used, phone)) { by = "Influencer " + used + " (already used)"; note = "The " + used + " code can be used once per customer."; }
+    else { by = "Influencer " + used; eligible = true; }
+  } else if (used) {
     var owner = codes[used];
     if (!owner) { by = "Code not found"; note = "We couldn't find that referral code, so no discount was applied."; }
     else if (owner.phone === phone) { by = "Their own code (no reward)"; note = "Your own referral code can't be used for a discount."; }
@@ -127,7 +133,7 @@ function handleReferral_(sheet, data) {
       ref.getRange(ref.getLastRow(), 8).insertCheckboxes();
     }
   }
-  return { used: used, by: by, code: mine, eligible: eligible, note: note };
+  return { used: used, by: by, code: mine, eligible: eligible, note: note, rate: rate };
 }
 
 function addReferralHeaders_(sheet) {
@@ -135,6 +141,10 @@ function addReferralHeaders_(sheet) {
   sheet.getRange(1, 17, 1, 4).setValues([HEADERS.slice(16)]).setFontWeight("bold").setBackground("#12293b").setFontColor("#ffffff");
   sheet.setColumnWidths(17, 4, 150);
   sheet.getRange("T2:T").setNumberFormat("$#,##0.00");
+}
+
+function usedPromoBefore_(rows, code, phone) {
+  return rows.some(function (r) { return String(r[16]).toUpperCase() === code && digits_(r[3]) === phone && Number(r[19]) > 0; });
 }
 
 // One new customer can only earn a reward for a friend once.
@@ -337,7 +347,7 @@ function sendAlert_(data, photoLinks, sheet, ref) {
   if (data.method) lines.push("Drop-off / Pickup: " + clean_(data.method) + (data.address ? " at " + clean_(data.address) : ""));
   if (data.order) lines.push("", "Order:", clean_(data.order), "Estimated total: " + clean_(data.total));
   if (data.notes) lines.push("", "Notes: " + clean_(data.notes));
-  if (ref && ref.used) lines.push("", "Referral code used: " + ref.used + " (" + ref.by + ")" + (ref.discount ? ", 15% off: -" + usd_(ref.discount) : ""));
+  if (ref && ref.used) lines.push("", "Referral code used: " + ref.used + " (" + ref.by + ")" + (ref.discount ? ", " + Math.round(ref.rate * 100) + "% off: -" + usd_(ref.discount) : ""));
   if (ref && ref.code) lines.push("Their own referral code: " + ref.code);
   if (photoLinks.length) lines.push("", "Photos:", photoLinks.join("\n"));
   lines.push("", "All requests: " + sheet.getParent().getUrl());
