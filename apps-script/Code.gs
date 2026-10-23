@@ -5,8 +5,9 @@
 
 var SHEET_NAME = "Requests";
 var FOLDER_NAME = "Jamo's Repair Photos";
-var HEADERS = ["Received", "Type", "Name", "Phone", "Day", "Time", "Drop-off / Pickup", "Pickup address", "Order", "Estimated total", "Notes", "Photos", "Status", "Amount paid ($)", "Paid with", "Auto-texted", "Referral code used", "Referred by", "Their referral code"];
+var HEADERS = ["Received", "Type", "Name", "Phone", "Day", "Time", "Drop-off / Pickup", "Pickup address", "Order", "Estimated total", "Notes", "Photos", "Status", "Amount paid ($)", "Paid with", "Auto-texted", "Referral code used", "Referred by", "Their referral code", "Referral discount ($)"];
 var REFERRAL_REWARD = 5;
+var REFERRAL_DISCOUNT = 0.15;
 var EXPENSE_CATEGORIES = ["Wax", "P-Tex & epoxy", "Tools", "Gas & driving", "Supplies", "Website & ads", "Other"];
 
 function doPost(e) {
@@ -20,8 +21,16 @@ function doPost(e) {
     var lock = LockService.getScriptLock();
     lock.waitLock(10000);
     try {
-      var ref = { used: "", by: "", code: "" };
-      if (data.type !== "photos") ref = handleReferral_(sheet, data);
+      var ref = { used: "", by: "", code: "", discount: 0, note: "" };
+      if (data.type !== "photos") {
+        ref = handleReferral_(sheet, data);
+        // The site shows 15% off whenever a code is typed. Only a valid friend's code keeps it.
+        var full = Number(data.subtotal);
+        if (isFinite(full) && full > 0) {
+          ref.discount = ref.eligible ? Math.round(full * REFERRAL_DISCOUNT * 100) / 100 : 0;
+          data.total = usd_(full - ref.discount);
+        }
+      }
       sheet.appendRow(cells_([
         new Date(),
         data.type === "photos" ? "Photo check" : "Booking",
@@ -36,7 +45,7 @@ function doPost(e) {
         clean_(data.notes),
         photoLinks.join("\n"),
         "New", "", "", "",
-        ref.used, ref.by, ref.code
+        ref.used, ref.by, ref.code, ref.discount || ""
       ]));
     } finally {
       lock.releaseLock();
@@ -44,7 +53,7 @@ function doPost(e) {
 
     sendAlert_(data, photoLinks, sheet, ref);
     pushAlert_(data);
-    return reply_({ ok: true, code: ref.code });
+    return reply_({ ok: true, code: ref.code, discount: ref.discount, total: clean_(data.total), refNote: ref.note });
   } catch (err) {
     return reply_({ ok: false, error: String(err) });
   }
@@ -64,7 +73,7 @@ function doGet(e) {
     var sheet = getSheet_();
     var last = sheet.getLastRow();
     if (last < 2) return reply_({ ok: true });
-    var rows = sheet.getRange(2, 1, last - 1, 19).getValues();
+    var rows = sheet.getRange(2, 1, last - 1, 20).getValues();
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
       if (r[1] === "Booking" && r[3] && !r[15]) {
@@ -72,6 +81,7 @@ function doGet(e) {
         var first = String(r[2]).split(" ")[0];
         var msg = "Hi " + first + "! It's Jamo from Jamo's Ski & Snowboard Repair. Got your booking request for " +
           asDay_(r[4]) + ", " + r[5] + ":\n" + r[8] + "\nEstimated total: " + (typeof r[9] === "number" ? "$" + r[9] : r[9]) +
+          (r[19] ? " (includes your 15% referral discount of " + usd_(Number(r[19])) + ")" : "") +
           "\nI'll text you soon to confirm your time." +
           (r[18] ? "\n\nYour referral code is " + r[18] + ". Share it with friends and you get $" + REFERRAL_REWARD + " back every time someone new books with it!" : "");
         return reply_({ ok: true, name: first, phone: String(r[3]), message: msg });
@@ -103,26 +113,28 @@ function handleReferral_(sheet, data) {
   }
 
   var used = String(data.referral || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-  var by = "";
+  var by = "", note = "", eligible = false;
   if (used) {
     var owner = codes[used];
-    if (!owner) by = "Code not found";
-    else if (owner.phone === phone) by = "Their own code (no reward)";
-    else if (alreadyReferred_(phone)) by = owner.name + " (no reward, already used a code before)";
+    if (!owner) { by = "Code not found"; note = "We couldn't find that referral code, so no discount was applied."; }
+    else if (owner.phone === phone) { by = "Their own code (no reward)"; note = "Your own referral code can't be used for a discount."; }
+    else if (alreadyReferred_(phone)) { by = owner.name + " (no reward, already used a code before)"; note = "The referral discount is for your first booking with a code."; }
     else {
+      eligible = true;
       by = owner.name;
       getReferrals_().appendRow(cells_([new Date(), used, clean_(owner.name), owner.phone, clean_(data.name), clean_(data.phone), REFERRAL_REWARD, false]));
       var ref = getReferrals_();
       ref.getRange(ref.getLastRow(), 8).insertCheckboxes();
     }
   }
-  return { used: used, by: by, code: mine };
+  return { used: used, by: by, code: mine, eligible: eligible, note: note };
 }
 
 function addReferralHeaders_(sheet) {
-  if (sheet.getRange(1, 17).getValue()) return;
-  sheet.getRange(1, 17, 1, 3).setValues([HEADERS.slice(16)]).setFontWeight("bold").setBackground("#12293b").setFontColor("#ffffff");
-  sheet.setColumnWidths(17, 3, 150);
+  if (sheet.getRange(1, 20).getValue()) return;
+  sheet.getRange(1, 17, 1, 4).setValues([HEADERS.slice(16)]).setFontWeight("bold").setBackground("#12293b").setFontColor("#ffffff");
+  sheet.setColumnWidths(17, 4, 150);
+  sheet.getRange("T2:T").setNumberFormat("$#,##0.00");
 }
 
 // One new customer can only earn a reward for a friend once.
@@ -144,6 +156,10 @@ function getReferrals_() {
     ref.getRange("G2:G").setNumberFormat("$#,##0.00");
   }
   return ref;
+}
+
+function usd_(n) {
+  return "$" + (n % 1 ? n.toFixed(2) : n);
 }
 
 function digits_(v) {
@@ -321,7 +337,7 @@ function sendAlert_(data, photoLinks, sheet, ref) {
   if (data.method) lines.push("Drop-off / Pickup: " + clean_(data.method) + (data.address ? " at " + clean_(data.address) : ""));
   if (data.order) lines.push("", "Order:", clean_(data.order), "Estimated total: " + clean_(data.total));
   if (data.notes) lines.push("", "Notes: " + clean_(data.notes));
-  if (ref && ref.used) lines.push("", "Referral code used: " + ref.used + " (" + ref.by + ")");
+  if (ref && ref.used) lines.push("", "Referral code used: " + ref.used + " (" + ref.by + ")" + (ref.discount ? ", 15% off: -" + usd_(ref.discount) : ""));
   if (ref && ref.code) lines.push("Their own referral code: " + ref.code);
   if (photoLinks.length) lines.push("", "Photos:", photoLinks.join("\n"));
   lines.push("", "All requests: " + sheet.getParent().getUrl());

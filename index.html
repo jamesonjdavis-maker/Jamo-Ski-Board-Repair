@@ -315,13 +315,14 @@ html { scroll-behavior: smooth; }
           <select id="b-how"><option value="drop">I'll drop it off</option><option value="pickup">Pick it up from me ($15)</option></select>
         </div>
         <div class="field" id="addr-field" hidden><label for="b-addr">Pickup address in Boulder</label><input id="b-addr" autocomplete="street-address"></div>
-        <div class="field"><label for="b-ref">Referral code <span class="fine">(optional)</span></label><input id="b-ref" autocomplete="off" autocapitalize="characters" placeholder="Got a code from a friend? Enter it here."></div>
+        <div class="field"><label for="b-ref">Referral code <span class="fine">(optional)</span></label><input id="b-ref" autocomplete="off" autocapitalize="characters" placeholder="Got a code from a friend? Get 15% off."></div>
         <div class="field"><label for="b-notes">Anything else?</label><textarea id="b-notes" placeholder="Need them back by Friday for a trip."></textarea></div>
         <input type="text" class="hp" id="b-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
         <button class="btn btn-ink" type="submit" id="book-send">Send booking request</button>
         <div class="result" id="book-done" hidden>
           <strong>Got it, thanks!</strong>
           <p>Your request is in. I'll text you soon to confirm your time.</p>
+          <p id="ref-note" hidden></p>
           <p id="my-code" hidden>Your referral code is <strong id="my-code-val"></strong>. Share it with friends and get $5 back every time someone new books with it.</p>
         </div>
         <div class="result" id="book-result" hidden>
@@ -351,7 +352,7 @@ html { scroll-behavior: smooth; }
       <details class="card"><summary>What's P-Tex and epoxy repair?</summary><p>P-Tex fills scratches and gouges in the base so it glides and doesn't soak up water. Epoxy repairs cracks and chips in the top layer so water can't get into the core.</p></details>
       <details class="card"><summary>How does the Season Service work?</summary><p>One payment of $100 covers every service, as many times as you need, on that pair of skis or snowboard for the whole season.</p></details>
       <details class="card"><summary>How do I pay?</summary><p>Cash, Venmo or Zelle when you get your gear back. Card payments are coming soon.</p></details>
-      <details class="card"><summary>Do you have a referral program?</summary><p>Yes. Every booking gets you your own referral code. When a friend books for the first time with your code, you get $5 back.</p></details>
+      <details class="card"><summary>Do you have a referral program?</summary><p>Yes. Every booking gets you your own referral code. When a friend books for the first time with your code, they get 15% off and you get $5 back.</p></details>
     </div>
   </section>
 </main>
@@ -380,7 +381,8 @@ html { scroll-behavior: smooth; }
   var INBOX_URL = "https://script.google.com/macros/s/AKfycbz-ndjSfm58u5Q4eGCnBXDsXTzqFZ1IysnFBjysduyxYPyUTSX2EEIMu6PfscgZLMHC/exec";
 
   var $ = function (id) { return document.getElementById(id); };
-  var money = function (n) { return "$" + n; };
+  var money = function (n) { return "$" + (n % 1 ? n.toFixed(2) : n); };
+  var REF_OFF = 0.15;
   var byId = {}; SERVICES.forEach(function (t) { byId[t.id] = t; });
 
   $("svcs").innerHTML = SERVICES.map(function (t) {
@@ -412,7 +414,10 @@ html { scroll-behavior: smooth; }
   function totals() {
     var sub = gear.reduce(function (s, g) { return s + itemPrice(g); }, 0);
     var pick = $("pickup").checked ? PICKUP : 0;
-    return { sub: sub, pick: pick, total: sub + pick };
+    var full = sub + pick;
+    // 15% off with a friend's referral code. The sheet checks the code and confirms it.
+    var off = $("b-ref").value.trim() ? Math.round(full * REF_OFF * 100) / 100 : 0;
+    return { sub: sub, pick: pick, full: full, off: off, total: full - off };
   }
 
   function describe(g) {
@@ -424,7 +429,8 @@ html { scroll-behavior: smooth; }
     var t = totals();
     $("lines").innerHTML = gear.length ? gear.map(function (g) {
       return "<li><span>" + g.kind + ": " + describe(g) + "</span><span>" + money(itemPrice(g)) + "</span></li>";
-    }).join("") + (t.pick ? "<li><span>Pickup &amp; dropoff</span><span>" + money(PICKUP) + "</span></li>" : "")
+    }).join("") + (t.pick ? "<li><span>Pickup &amp; dropoff</span><span>" + money(PICKUP) + "</span></li>" : "") +
+      (t.off ? "<li><span>Referral discount (15%)</span><span>−" + money(t.off) + "</span></li>" : "")
       : '<li class="empty">Add skis or a snowboard to start.</li>';
     $("total").textContent = money(t.total);
   }
@@ -445,6 +451,7 @@ html { scroll-behavior: smooth; }
   document.querySelectorAll("[data-add]").forEach(function (b) {
     b.addEventListener("click", function () { gear.push({ kind: b.dataset.add, picks: [], season: false }); renderGear(); });
   });
+  $("b-ref").addEventListener("input", renderTicket);
   $("pickup").addEventListener("change", function () {
     $("b-how").value = $("pickup").checked ? "pickup" : "drop"; syncAddr(); renderTicket();
   });
@@ -516,10 +523,14 @@ html { scroll-behavior: smooth; }
       name: $("b-name").value, phone: $("b-phone").value,
       day: $("b-date").value, time: $("b-time").value,
       method: $("b-how").value === "pickup" ? "Pickup" : "Drop-off", address: $("b-addr").value,
-      order: orderText(), total: money(totals().total), notes: $("b-notes").value,
+      order: orderText(), total: money(totals().total), subtotal: totals().full, notes: $("b-notes").value,
       referral: $("b-ref").value
     }).then(function (res) {
       $("my-code").hidden = !res.code; $("my-code-val").textContent = res.code || "";
+      var note = "";
+      if (res.discount) note = "Your 15% referral discount (" + money(res.discount) + ") is applied. Estimated total: " + res.total + ".";
+      else if (res.refNote) note = res.refNote + " Your estimated total is " + res.total + ".";
+      $("ref-note").textContent = note; $("ref-note").hidden = !note;
       $("book-done").hidden = false; busy(btn, false, "Send booking request");
     }, function () {
       // If sending fails, give them the text version so the request isn't lost.
