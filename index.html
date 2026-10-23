@@ -456,6 +456,8 @@ html { scroll-behavior: smooth; }
     b.addEventListener("click", function () { gear.push({ kind: b.dataset.add, picks: [], season: false }); renderGear(); });
   });
   $("b-ref").addEventListener("input", renderTicket);
+  // Flyer QR codes link here with ?code=VILL so the code is filled in for them.
+  try { var linkCode = new URLSearchParams(location.search).get("code"); if (linkCode) $("b-ref").value = linkCode.slice(0, 20); } catch (err) {}
   $("pickup").addEventListener("change", function () {
     $("b-how").value = $("pickup").checked ? "pickup" : "drop"; syncAddr(); renderTicket();
   });
