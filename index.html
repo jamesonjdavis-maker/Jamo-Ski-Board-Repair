@@ -315,7 +315,7 @@ html { scroll-behavior: smooth; }
           <select id="b-how"><option value="drop">I'll drop it off</option><option value="pickup">Pick it up from me ($15)</option></select>
         </div>
         <div class="field" id="addr-field" hidden><label for="b-addr">Pickup address in Boulder</label><input id="b-addr" autocomplete="street-address"></div>
-        <div class="field"><label for="b-ref">Referral code <span class="fine">(optional)</span></label><input id="b-ref" autocomplete="off" autocapitalize="characters" placeholder="Got a code from a friend? Get 15% off."></div>
+        <div class="field"><label for="b-ref">Referral code <span class="fine">(optional)</span></label><input id="b-ref" autocomplete="off" autocapitalize="characters" placeholder="Have a referral or promo code? Enter it here."></div>
         <div class="field"><label for="b-notes">Anything else?</label><textarea id="b-notes" placeholder="Need them back by Friday for a trip."></textarea></div>
         <input type="text" class="hp" id="b-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
         <button class="btn btn-ink" type="submit" id="book-send">Send booking request</button>
@@ -383,6 +383,9 @@ html { scroll-behavior: smooth; }
   var $ = function (id) { return document.getElementById(id); };
   var money = function (n) { return "$" + (n % 1 ? n.toFixed(2) : n); };
   var REF_OFF = 0.15;
+  // Influencer codes. Keep in sync with PROMO_CODES in the Google script.
+  var PROMOS = { VILL: 0.20, PEAKED: 0.20 };
+  function refCode() { return $("b-ref").value.toUpperCase().replace(/[^A-Z0-9]/g, ""); }
   var byId = {}; SERVICES.forEach(function (t) { byId[t.id] = t; });
 
   $("svcs").innerHTML = SERVICES.map(function (t) {
@@ -415,9 +418,10 @@ html { scroll-behavior: smooth; }
     var sub = gear.reduce(function (s, g) { return s + itemPrice(g); }, 0);
     var pick = $("pickup").checked ? PICKUP : 0;
     var full = sub + pick;
-    // 15% off with a friend's referral code. The sheet checks the code and confirms it.
-    var off = $("b-ref").value.trim() ? Math.round(full * REF_OFF * 100) / 100 : 0;
-    return { sub: sub, pick: pick, full: full, off: off, total: full - off };
+    // 15% off with a friend's referral code, or an influencer code's rate. The sheet checks the code and confirms it.
+    var code = refCode(), rate = code ? (PROMOS[code] || REF_OFF) : 0;
+    var off = Math.round(full * rate * 100) / 100;
+    return { sub: sub, pick: pick, full: full, off: off, rate: rate, promo: !!PROMOS[code], total: full - off };
   }
 
   function describe(g) {
@@ -430,7 +434,7 @@ html { scroll-behavior: smooth; }
     $("lines").innerHTML = gear.length ? gear.map(function (g) {
       return "<li><span>" + g.kind + ": " + describe(g) + "</span><span>" + money(itemPrice(g)) + "</span></li>";
     }).join("") + (t.pick ? "<li><span>Pickup &amp; dropoff</span><span>" + money(PICKUP) + "</span></li>" : "") +
-      (t.off ? "<li><span>Referral discount (15%)</span><span>−" + money(t.off) + "</span></li>" : "")
+      (t.off ? "<li><span>" + (t.promo ? refCode() + " discount" : "Referral discount") + " (" + Math.round(t.rate * 100) + "%)</span><span>−" + money(t.off) + "</span></li>" : "")
       : '<li class="empty">Add skis or a snowboard to start.</li>';
     $("total").textContent = money(t.total);
   }
@@ -528,7 +532,7 @@ html { scroll-behavior: smooth; }
     }).then(function (res) {
       $("my-code").hidden = !res.code; $("my-code-val").textContent = res.code || "";
       var note = "";
-      if (res.discount) note = "Your 15% referral discount (" + money(res.discount) + ") is applied. Estimated total: " + res.total + ".";
+      if (res.discount) note = "Your discount (" + money(res.discount) + ") is applied. Estimated total: " + res.total + ".";
       else if (res.refNote) note = res.refNote + " Your estimated total is " + res.total + ".";
       $("ref-note").textContent = note; $("ref-note").hidden = !note;
       $("book-done").hidden = false; busy(btn, false, "Send booking request");
