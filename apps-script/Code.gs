@@ -5,7 +5,7 @@
 
 var SHEET_NAME = "Requests";
 var FOLDER_NAME = "Jamo's Repair Photos";
-var HEADERS = ["Received", "Type", "Name", "Phone", "Day", "Time", "Drop-off / Pickup", "Pickup address", "Order", "Estimated total", "Notes", "Photos", "Status", "Amount paid ($)", "Paid with", "Auto-texted", "Referral code used", "Referred by", "Their referral code", "Referral discount ($)"];
+var HEADERS = ["Received", "Type", "Name", "Phone", "Day", "Time", "Drop-off / Pickup", "Pickup address", "Order", "Estimated total", "Notes", "Photos", "Status", "Amount paid ($)", "Paid with", "Auto-texted", "Referral code used", "Referred by", "Their referral code", "Referral discount ($)", "Heard about us"];
 var REFERRAL_REWARD = 5;
 var REFERRAL_DISCOUNT = 0.15;
 // Influencer codes: anyone can use one once for this much off, and the influencer earns the $5 reward. Keep in sync with PROMOS on the website.
@@ -25,6 +25,7 @@ function doPost(e) {
     try {
       var ref = { used: "", by: "", code: "", discount: 0, note: "" };
       if (data.type !== "photos") {
+        addHeardHeader_(sheet);
         ref = handleReferral_(sheet, data);
         // The site shows 15% off whenever a code is typed. Only a valid friend's code keeps it.
         var full = Number(data.subtotal);
@@ -47,7 +48,8 @@ function doPost(e) {
         clean_(data.notes),
         photoLinks.join("\n"),
         "New", "", "", "",
-        ref.used, ref.by, ref.code, ref.discount || ""
+        ref.used, ref.by, ref.code, ref.discount || "",
+        clean_(data.heard)
       ]));
     } finally {
       lock.releaseLock();
@@ -144,9 +146,16 @@ function handleReferral_(sheet, data) {
 
 function addReferralHeaders_(sheet) {
   if (sheet.getRange(1, 20).getValue()) return;
-  sheet.getRange(1, 17, 1, 4).setValues([HEADERS.slice(16)]).setFontWeight("bold").setBackground("#12293b").setFontColor("#ffffff");
+  sheet.getRange(1, 17, 1, 4).setValues([HEADERS.slice(16, 20)]).setFontWeight("bold").setBackground("#12293b").setFontColor("#ffffff");
   sheet.setColumnWidths(17, 4, 150);
   sheet.getRange("T2:T").setNumberFormat("$#,##0.00");
+}
+
+// Sheets made before the "How did you hear about us?" question get the column header added.
+function addHeardHeader_(sheet) {
+  if (sheet.getRange(1, 21).getValue()) return;
+  sheet.getRange(1, 21).setValue(HEADERS[20]).setFontWeight("bold").setBackground("#12293b").setFontColor("#ffffff");
+  sheet.setColumnWidth(21, 150);
 }
 
 function usedPromoBefore_(rows, code, phone) {
@@ -352,6 +361,7 @@ function sendAlert_(data, photoLinks, sheet, ref) {
   if (data.day) lines.push("Day: " + data.day + ", " + clean_(data.time));
   if (data.method) lines.push("Drop-off / Pickup: " + clean_(data.method) + (data.address ? " at " + clean_(data.address) : ""));
   if (data.order) lines.push("", "Order:", clean_(data.order), "Estimated total: " + clean_(data.total));
+  if (data.heard) lines.push("", "Heard about us: " + clean_(data.heard));
   if (data.notes) lines.push("", "Notes: " + clean_(data.notes));
   if (ref && ref.used) lines.push("", "Referral code used: " + ref.used + " (" + ref.by + ")" + (ref.discount ? ", " + Math.round(ref.rate * 100) + "% off: -" + usd_(ref.discount) : ""));
   if (ref && ref.code) lines.push("Their own referral code: " + ref.code);

@@ -81,6 +81,22 @@
       </div>
       <div class="field" id="addr-field" hidden><label for="b-addr">Pickup address in Boulder</label><input id="b-addr" autocomplete="street-address"></div>
       <div class="field"><label for="b-ref">Referral or promo code <span class="fine">(optional)</span></label><input id="b-ref" autocomplete="off" autocapitalize="characters"></div>
+      <div class="field"><label for="b-heard">How did you hear about us? <span class="fine">(optional)</span></label>
+        <select id="b-heard">
+          <option value="">Pick one</option>
+          <option>Instagram</option>
+          <option>Facebook</option>
+          <option>Nextdoor</option>
+          <option>TikTok</option>
+          <option>Google search</option>
+          <option>Flyer or QR code</option>
+          <option>A friend</option>
+          <option>@vilgolfs</option>
+          <option>The Peaked in College Show</option>
+          <option value="Other">Somewhere else</option>
+        </select>
+      </div>
+      <div class="field" id="heard-other-field" hidden><label for="b-heard-other">Where did you hear about us?</label><input id="b-heard-other" autocomplete="off"></div>
       <div class="field"><label for="b-notes">Anything else?</label><textarea id="b-notes" placeholder="Need them back by Friday for a trip."></textarea></div>
       <input type="text" class="hp" id="b-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
       <button class="btn btn-primary" type="submit" id="book-send">Send booking request</button>

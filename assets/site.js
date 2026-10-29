@@ -53,8 +53,9 @@
   function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (err) {} }
   function forget(k) { try { localStorage.removeItem(k); } catch (err) {} }
 
-  // Flyer QR codes link here with ?code=VILL, and the code is kept until they book.
-  try { var linkCode = new URLSearchParams(location.search).get("code"); if (linkCode) store(CODE_KEY, linkCode.slice(0, 20)); } catch (err) {}
+  // Codes are never saved or filled in for people: a code only counts when they type it on the Book page (Jameson's rule).
+  // Earlier versions of the site saved codes from flyer links, so clear any that are still in the browser.
+  forget(CODE_KEY);
 
   function clean(g) {
     if (!g || typeof g !== "object") return null;
@@ -103,7 +104,7 @@
   }
 
   function refCode() {
-    var el = $("b-ref"), v = el ? el.value : (load(CODE_KEY) || "");
+    var el = $("b-ref"), v = el ? el.value : "";
     return String(v).toUpperCase().replace(/[^A-Z0-9]/g, "");
   }
   function totals() {
@@ -114,13 +115,6 @@
     var code = refCode(), rate = code ? (PROMOS[code] || REF_OFF) : 0;
     var off = Math.round(full * rate * 100) / 100;
     return { sub: sub, pick: pick, full: full, off: off, rate: rate, promo: !!PROMOS[code], total: full - off };
-  }
-
-  // A saved code shows as a gold note in the header, so people from a flyer know it's applied.
-  if ($("codebar") && !$("b-ref") && refCode()) {
-    var c = refCode();
-    $("codebar").textContent = "Code " + c + " is saved: " + (PROMOS[c] ? Math.round(PROMOS[c] * 100) + "% off your order" : "15% off your first booking") + " when you book.";
-    $("codebar").hidden = false;
   }
 
   if ($("svcs")) {
@@ -265,16 +259,17 @@
 
   // Book page: the saved quote, days and times, and the booking form.
   if ($("book-form")) {
-    $("b-ref").value = load(CODE_KEY) || "";
-    $("b-ref").addEventListener("input", function () {
-      var v = $("b-ref").value.trim();
-      if (v) store(CODE_KEY, v); else forget(CODE_KEY);
-      renderTicket();
-    });
+    $("b-ref").addEventListener("input", renderTicket);
     var syncAddr = function () { $("addr-field").hidden = $("b-how").value !== "pickup"; };
     $("b-how").value = pickup ? "pickup" : "drop";
     syncAddr();
     $("b-how").addEventListener("change", function () { pickup = $("b-how").value === "pickup"; syncAddr(); renderTicket(); });
+    // "How did you hear about us?" answer, with their own words when they pick "Somewhere else".
+    var heard = function () {
+      var v = $("b-heard").value, other = $("b-heard-other").value.trim();
+      return v === "Other" ? (other ? "Other: " + other : "Other") : v;
+    };
+    $("b-heard").addEventListener("change", function () { $("heard-other-field").hidden = this.value !== "Other"; });
     renderTicket();
 
     var DAYS_AHEAD = 21;
@@ -309,6 +304,7 @@
         "\n\nOrder:\n" + orderText() +
         "\nEstimated total: " + money(t.total) +
         ($("b-ref").value ? "\nReferral code: " + $("b-ref").value : "") +
+        (heard() ? "\nHeard about us: " + heard() : "") +
         ($("b-notes").value ? "\n\nNotes: " + $("b-notes").value : "");
       $("book-text").textContent = txt;
       $("sms-book").href = "sms:" + PHONE + "?&body=" + encodeURIComponent(txt);
@@ -327,7 +323,7 @@
         day: $("b-date").value, time: $("b-time").value,
         method: $("b-how").value === "pickup" ? "Pickup" : "Drop-off", address: $("b-addr").value,
         order: orderText(), total: money(totals().total), subtotal: totals().full, notes: $("b-notes").value,
-        referral: $("b-ref").value
+        referral: $("b-ref").value, heard: heard()
       }).then(function (res) {
         $("my-code").hidden = !res.code; $("my-code-val").textContent = res.code || "";
         var note = "";
@@ -336,7 +332,7 @@
         $("ref-note").textContent = note; $("ref-note").hidden = !note;
         $("book-done").hidden = false; busy(btn, false, "Send booking request");
         // Booked: start fresh next time.
-        booked = true; forget(KEY); forget(CODE_KEY);
+        booked = true; forget(KEY);
       }, function () {
         // If sending fails, give them the text version so the request isn't lost.
         showBookFallback(); busy(btn, false, "Send booking request");
